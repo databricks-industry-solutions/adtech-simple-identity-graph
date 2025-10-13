@@ -1,0 +1,66 @@
+{
+   "name":"Solution Accelerator - Simple Identity Graph",
+   "description":"This is the job from the Databricks Solution Accelerator that constructs a simple identity graph.",
+   "email_notifications":{
+      "on_failure":[
+         "{{current_user}}"
+      ],
+      "no_alert_for_skipped_runs":"true"
+   },
+   "trigger":{
+      "pause_status":"UNPAUSED",
+      "periodic":{
+         "interval":1,
+         "unit":"DAYS"
+      }
+   },
+   "tasks":[
+      {
+         "task_key":"01_Create_Consolidated_Identity_Info",
+         "notebook_task":{
+            "notebook_path":"{{workflow_notebooks}}/01_Create Consolidated Identity Info",
+            "source":"WORKSPACE"
+         }
+      },
+      {
+         "task_key":"02a_Create_Individual_Identity_Table",
+         "depends_on":[
+            {
+               "task_key":"01_Create_Consolidated_Identity_Info"
+            }
+         ],
+         "notebook_task":{
+            "notebook_path":"{{workflow_notebooks}}/02a_Create Email IFA Paired Table",
+            "source":"WORKSPACE"
+         }
+      },
+      {
+         "task_key":"02b_Create_Household_Identity_Table",
+         "depends_on":[
+            {
+               "task_key":"01_Create_Consolidated_Identity_Info"
+            }
+         ],
+         "notebook_task":{
+            "notebook_path":"{{workflow_notebooks}}/02b_Create Email IP Paired Table",
+            "source":"WORKSPACE"
+         }
+      },
+      {
+         "task_key":"03_Create_Identity_Graph",
+         "depends_on":[
+            {
+               "task_key":"02a_Create_Individual_Identity_Table"
+            },
+            {
+               "task_key":"02b_Create_Household_Identity_Table"
+            }
+         ],
+         "notebook_task":{
+            "notebook_path":"{{workflow_notebooks}}/03_Create Identity Graph",
+            "source":"WORKSPACE"
+         }
+      }
+   ],
+   "performance_target":"STANDARD"
+}

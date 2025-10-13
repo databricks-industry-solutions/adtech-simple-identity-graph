@@ -1,0 +1,78 @@
+{
+  "description": "Final identity graph with consolidated MegaCorp identifiers and associated digital identities",
+  "fields": [
+    {
+      "metadata": {
+        "comment": "The generated core/spine identifier (individual-level) of the Consumer at MegaCorp"
+      },
+      "name": "megacorp_id",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The SHA-256 hash of the consumer email address based on Ad Server data"
+      },
+      "name": "email_sha256",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The selected primary IFA (Identifier for Advertisers) based on Ad Server data"
+      },
+      "name": "primary_ifa",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The selected primary IP address of the Consumer based on Ad Server data"
+      },
+      "name": "primary_ip",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The list of additional IP addresses associated with the Consumer based on Ad Server data"
+      },
+      "name": "secondary_ip_list",
+      "nullable": true,
+      "type": { 
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "metadata": {
+        "comment": "The list of additional IFA (Identifier for Advertisers) associated with the Consumer based on Ad Server data"
+      },
+      "name": "secondary_ifa_list",
+      "nullable": true,
+      "type": {
+        "containsNull": true,
+        "elementType": "string",
+        "type": "array"
+      }
+    },
+    {
+      "metadata": {
+        "comment": "The Last Seen Date for this Consumer's MegaCorp ID"
+      },
+      "name": "max_date",
+      "nullable": true,
+      "type": "date"
+    },
+    {
+      "metadata": {
+        "comment": "The First Seen Date for this Consumer's MegaCorp ID"
+      },
+      "name": "min_date",
+      "nullable": true,
+      "type": "date"
+    }
+  ],
+  "type": "struct"
+}

@@ -1,0 +1,54 @@
+{
+  "description": "Consolidated identity information from impression logs with grouped digital identifiers",
+  "fields": [
+    {
+      "metadata": {
+        "comment": "Email address of the Consumer as recorded by the Ad Server"
+      },
+      "name": "_server_email",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "IP address of the Consumer as recorded by the Ad Server"
+      },
+      "name": "ip_address",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The IFA (Identifier for Advertisers) as recorded by the Ad Server"
+      },
+      "name": "_server_ifa",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The First Seen Date for this particular combination of identities."
+      },
+      "name": "min_date",
+      "nullable": true,
+      "type": "date"
+    },
+    {
+      "metadata": {
+        "comment": "The Last Seen Date for this particular combination of identities."
+      },
+      "name": "max_date",
+      "nullable": true,
+      "type": "date"
+    },
+    {
+      "metadata": {
+        "comment": "Number of occurrences of this particular combination of identities."
+      },
+      "name": "n_occurances",
+      "nullable": true,
+      "type": "long"
+    }
+  ],
+  "type": "struct"
+} 

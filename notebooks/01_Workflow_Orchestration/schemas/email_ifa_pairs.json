@@ -1,0 +1,54 @@
+{
+  "description": "Email to IFA device identifier pairing data with occurrence statistics",
+  "fields": [
+    {
+      "metadata": {
+        "comment": "Email address of the Consumer as recorded by the Ad Server"
+      },
+      "name": "_server_email",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The IFA (Identifier for Advertisers) as recorded by the Ad Server"
+      },
+      "name": "_server_ifa",
+      "nullable": true,
+      "type": "string"
+    },
+    {
+      "metadata": {
+        "comment": "The First Seen Date for this particular combination of identities."
+      },
+      "name": "min_date",
+      "nullable": true,
+      "type": "date"
+    },
+    {
+      "metadata": {
+        "comment": "The Last Seen Date for this particular combination of identities."
+      },
+      "name": "max_date",
+      "nullable": true,
+      "type": "date"
+    },
+    {
+      "metadata": {
+        "comment": "Number of occurrences of this particular combination of identities."
+      },
+      "name": "n_occurances",
+      "nullable": true,
+      "type": "long"
+    },
+    {
+      "metadata": {
+        "comment": "The rank of the identity based on established waterfall. 1 is the highest rank."
+      },
+      "name": "primary_rank",
+      "nullable": true,
+      "type": "integer"
+    }
+  ],
+  "type": "struct"
+}

@@ -1,0 +1,396 @@
+{
+  "datasets": [
+    {
+      "name": "f30d786f",
+      "displayName": "Identity Graph",
+      "queryLines": [
+        "SELECT * FROM achu_demos.gold.identity_graph"
+      ]
+    },
+    {
+      "name": "473b4532",
+      "displayName": "Primary IPs",
+      "queryLines": [
+        "WITH primary_ip_info AS (\n",
+        "  SELECT \n",
+        "COUNT(DISTINCT megacorp_id) as `Individuals`, \n",
+        "Count(DISTINCT primary_ip) as `Primary IPs`,\n",
+        "COUNT( DISTINCT CASE WHEN primary_ip IS NOT NULL THEN megacorp_id END) AS `Individuals with Primary IPs`  \n",
+        "FROM achu_demos.gold.identity_graph)\n",
+        "\n",
+        "select *,`Individuals with Primary IPs` / `Individuals` as pct_matched from primary_ip_info"
+      ]
+    },
+    {
+      "name": "11d31999",
+      "displayName": "Primary IFAs",
+      "queryLines": [
+        "\n",
+        "with primary_ifa_info as (SELECT \n",
+        "Count(DISTINCT megacorp_id) as `Individuals`, \n",
+        "Count(DISTINCT primary_ifa) as `Primary IFAs`,\n",
+        "COUNT( DISTINCT CASE WHEN primary_ifa IS NOT NULL THEN megacorp_id END) AS `Individuals with Primary IFAs`  \n",
+        "FROM achu_demos.gold.identity_graph)\n",
+        "\n",
+        "select * from primary_ifa_info"
+      ],
+      "columns": [
+        {
+          "displayName": "Percent of Matched Individuals",
+          "description": "",
+          "expression": "`Primary IFAs` / `Individuals`"
+        }
+      ]
+    },
+    {
+      "name": "a680857b",
+      "displayName": "Identity and Server Email Analysis",
+      "queryLines": [
+        "with id_graph_emails as (\n",
+        "  SELECT min_date, COUNT(DISTINCT email_sha256) as n_matched_emails \n",
+        "  FROM achu_demos.gold.identity_graph\n",
+        "  GROUP BY min_date),\n",
+        "\n",
+        "server_emails as (SELECT date, COUNT(DISTINCT request_kv._server_email) as server_emails \n",
+        "FROM achu_demos.bronze.impression_logs_prod\n",
+        "GROUP BY date)\n",
+        "\n",
+        "\n",
+        "SELECT date, server_emails - n_matched_emails as `existing_emails`, n_matched_emails as `new_emails`\n",
+        "FROM (SELECT COALESCE(date,min_date) as `date`, COALESCE(server_emails,0) as `server_emails`, COALESCE(n_matched_emails,0) as `n_matched_emails` \n",
+        "FROM server_emails a FULL JOIN id_graph_emails b ON a.`date` = b.`min_date`)\n",
+        "WHERE `date` > '2025-04-02'\n",
+        "ORDER BY `date`"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "686ccce5",
+      "displayName": "Topline",
+      "layout": [
+        {
+          "widget": {
+            "name": "232abe6f",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "f30d786f",
+                  "fields": [
+                    {
+                      "name": "countdistinct(megacorp_id)",
+                      "expression": "COUNT(DISTINCT `megacorp_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(megacorp_id)",
+                  "displayName": "Count of Unique megacorp_id"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Number of Individuals"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "ba974bef",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "473b4532",
+                  "fields": [
+                    {
+                      "name": "Primary IPs",
+                      "expression": "`Primary IPs`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "Primary IPs",
+                  "displayName": "Primary IPs"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Number of Households"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "9a69f76d",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "473b4532",
+                  "fields": [
+                    {
+                      "name": "pct_matched",
+                      "expression": "`pct_matched`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "pct_matched",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "displayName": "pct_matched"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Number of IPs (% Matched)"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "2a32f5b3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "f30d786f",
+                  "fields": [
+                    {
+                      "name": "countdistinct(email_sha256)",
+                      "expression": "COUNT(DISTINCT `email_sha256`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(email_sha256)",
+                  "displayName": "Count of Unique email_sha256"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Number of Emails"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "bbcd1250",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "11d31999",
+                  "fields": [
+                    {
+                      "name": "Percent of Matched Individuals",
+                      "expression": "`Percent of Matched Individuals`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "Percent of Matched Individuals",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "displayName": "Percent of Matched Individuals"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "% IFAs Matched"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "46dcbbc7",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a680857b",
+                  "fields": [
+                    {
+                      "name": "daily(date)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date`)"
+                    },
+                    {
+                      "name": "sum(new_emails)",
+                      "expression": "SUM(`new_emails`)"
+                    },
+                    {
+                      "name": "sum(existing_emails)",
+                      "expression": "SUM(`existing_emails`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(date)",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Date"
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "sum(new_emails)",
+                      "displayName": "# New Matches"
+                    },
+                    {
+                      "fieldName": "sum(existing_emails)",
+                      "displayName": "# Existing Matches"
+                    }
+                  ],
+                  "axis": {
+                    "title": "# Individuals"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "New vs Total Matches Per Day"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 4
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "name": "04009add",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "97b45732",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a680857b",
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {}
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    }
+  }
+}
