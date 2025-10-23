@@ -31,7 +31,7 @@ import os
 current_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
 current_dir = "/Workspace"+"/".join(current_path.split("/")[:-1])
 workflow_dir = current_dir.split("02_Dashboard_Insights")[0] + "/01_Workflow_Orchestration"
-dashboard_dir = current_dir.split("02_Dashboard_Insights")[0] + "/02_Dashboard_Insights"
+dashboard_dir = current_dir.split("/notebooks/")[0] + "/dashboards"
 template_path = f"{dashboard_dir}/dashboard_template.json"
 output_path = f"{dashboard_dir}/Identity Graph Health.lvdash.json"
 job_info_path = f"{workflow_dir}/data/job_info.json"

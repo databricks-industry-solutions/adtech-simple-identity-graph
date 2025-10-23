@@ -1,1 +1,12 @@
-# Check here to get the latest version of the databricks-cli: https://github.com/databricks/cli
+# Databricks Identity Graph Solution Accelerator
+# Python dependencies for local development and testing
+
+# Databricks SDK - for programmatic interaction with Databricks APIs
+databricks-sdk>=0.18.0
+
+# Databricks CLI - for deployment and workspace management
+# Install separately via: https://docs.databricks.com/dev-tools/cli/install.html
+# Or use: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+# Note: PySpark is provided by the Databricks runtime and does not need to be installed locally
+# when running notebooks in the Databricks workspace
