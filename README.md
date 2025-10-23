@@ -8,6 +8,8 @@
 
 This demo walks through the construction of a simple digital identity graph using advertising impression logs on Databricks. It is designed to help you understand the foundational concepts and implementation steps behind building an identity graph in a modern data and AI platform.
 
+This README assumes you are relatively new to the Databricks Platform and our POV on Advertising Identity. If you familiar, feel free to skip to the Solution Launcher in `notebooks`.
+
 ---
 
 ## What is an Identity Graph?
@@ -21,7 +23,7 @@ In advertising, an **Identity Graph** is typically a table or product that links
 
 Depending on business needs, identity graphs may also incorporate traditional or **terrestrial identity spaces**—such as hashed names, physical addresses, or phone numbers. Though these are not covered in this demo, they can easily be incorporated into the workflow.
 
-### What Does An Identity Graph Look Like?
+### So, What Does An Identity Graph Look Like?
 
 A typical row in an identity graph might look like:
 
@@ -38,7 +40,7 @@ In this solution accelerator, we will be including timestamp and secondary ident
 
 ---
 
-## What It's Used For
+## What Is It Used For?
 
 An identity graph is essential for advertisers who need to use anonymized audience identities at the individual or household level—based on what they know about those identities. Defining a segment by household or person is conceptually simpler and more useful for marketers, but platforms often require targeting to happen in more granular or fragmented identity spaces. This is where an identity graph comes in.
 
@@ -82,7 +84,7 @@ Without careful data curation, identity graphs can create false connections—or
 
 ## Making an Identity Graph in Databricks
 
-<img src='./assets/img/build-buy-spectrum.png' style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
+<img src='./assets/img/build-buy-spectrum.png' style="object-fit:cover; object-position:50% 30%; height:300px; zoom:1.2;"></img>
 
 Whether you're looking to build your own identity graph or buy a solution from a vendor or partner, Databricks can support you across the full spectrum.
 
@@ -124,7 +126,7 @@ The Workflow orchestrates the following steps:
 | 2    | Household-Level Proxy Table|Silver  |Stores resolved household identifiers.|
 | 3    | Final Identity Graph | Gold |Combines individual and household proxies into a unified, query-ready graph.|
 
-<img src="./assets/img/medallion-data-arch-annotated.png" style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
+<img src="./assets/img/medallion-data-arch-annotated.png" style="object-fit:cover; object-position:50% 30%; height:300px; zoom:1.2;"></img>
 
 This layered approach makes it easier to debug, maintain, and evolve as your matching logic becomes more sophisticated.
 
