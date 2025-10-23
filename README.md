@@ -84,7 +84,7 @@ Without careful data curation, identity graphs can create false connections—or
 
 ## Making an Identity Graph in Databricks
 
-<img src='./assets/img/build-buy-spectrum.png' style="object-fit:cover; object-position:50% 30%; height:300px; zoom:1.2;"></img>
+<img src='./assets/img/build-buy-spectrum.png' style="width: 100%;"></img>
 
 Whether you're looking to build your own identity graph or buy a solution from a vendor or partner, Databricks can support you across the full spectrum.
 
@@ -102,7 +102,7 @@ Some foundational Databricks features within this Accelerator that simplify the 
 
 The diagram below shows how these tools fit together within the Databricks Platform and additional Databricks features you can leverage to accelerate your identity graph initiatives.
 
-<img src='./assets/img/db-identity-tools.png' style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
+<img src='./assets/img/db-identity-tools.png' style="width: 100%;"></img>
 
 Regardless of approach, the flexibility of the Databricks Platform helps you operationalize your identity strategy while staying in control of your data and infrastructure.
 
@@ -114,7 +114,7 @@ This accelerator demonstrates how to build a simple—but fully extensible—dig
 
 The example is deliberately lightweight to be approachable for new users, yet modular enough for advanced teams to extend with custom logic, enrichment data, or machine learning models.
 
-<img src="https://www.databricks.com/sites/default/files/inline-images/building-data-pipelines-with-delta-lake-120823.png" style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
+<img src="https://www.databricks.com/sites/default/files/inline-images/building-data-pipelines-with-delta-lake-120823.png" style="width: 100%;"></img>
 
 The Workflow orchestrates the following steps:
 
@@ -126,7 +126,7 @@ The Workflow orchestrates the following steps:
 | 2    | Household-Level Proxy Table|Silver  |Stores resolved household identifiers.|
 | 3    | Final Identity Graph | Gold |Combines individual and household proxies into a unified, query-ready graph.|
 
-<img src="./assets/img/medallion-data-arch-annotated.png" style="object-fit:cover; object-position:50% 30%; height:300px; zoom:1.2;"></img>
+<img src="./assets/img/medallion-data-arch-annotated.png" style="width: 100%;"></img>
 
 This layered approach makes it easier to debug, maintain, and evolve as your matching logic becomes more sophisticated.
 
@@ -138,25 +138,25 @@ This layered approach makes it easier to debug, maintain, and evolve as your mat
 
 Clone this project into your Databricks Workspace:
 
-<img width="1726" height="677" alt="Screenshot 2025-07-23 at 11 05 25 AM" src="https://github.com/user-attachments/assets/55b1729f-ad07-420e-a271-843266abfb71" />
+<img width="100%" alt="Screenshot 2025-07-23 at 11 05 25 AM" src="https://github.com/user-attachments/assets/55b1729f-ad07-420e-a271-843266abfb71" />
 
 ### 2. Open the Asset Bundle Editor
 
 Open the Asset Bundle Editor in the Databricks UI:
 
-<img width="1120" height="665" alt="Screenshot 2025-07-23 at 11 06 12 AM" src="https://github.com/user-attachments/assets/d1f91256-eb8f-4456-8d88-c0a37b1bd4c5" />
+<img width="100%" alt="Screenshot 2025-07-23 at 11 06 12 AM" src="https://github.com/user-attachments/assets/d1f91256-eb8f-4456-8d88-c0a37b1bd4c5" />
 
 ### 3. Deploy
 
 Click on "Deploy":
 
-<img width="1523" height="902" alt="Screenshot 2025-07-23 at 11 09 37 AM" src="https://github.com/user-attachments/assets/9564cbdd-c5c5-4210-bf27-2b19e6efc85b" />
+<img width="100%" alt="Screenshot 2025-07-23 at 11 09 37 AM" src="https://github.com/user-attachments/assets/9564cbdd-c5c5-4210-bf27-2b19e6efc85b" />
 
 ### 4. Run the Job
 
 Navigate to the Deployments tab in the Asset Bundle UI (🚀 icon) and click "Run" on the job available. This will run the notebooks from this project sequentially.
 
-<img width="1527" height="880" alt="Screenshot 2025-07-23 at 11 10 13 AM" src="https://github.com/user-attachments/assets/0f612882-7123-449b-8349-1835bc59523c" />
+<img width="100%" alt="Screenshot 2025-07-23 at 11 10 13 AM" src="https://github.com/user-attachments/assets/0f612882-7123-449b-8349-1835bc59523c" />
 
 ---
 
