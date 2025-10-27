@@ -70,7 +70,7 @@ impression_logs = spark.table(f"{catalog_name}.bronze.impression_logs_prod")
 # MAGIC
 # MAGIC ### 🎯 Why These Fields Matter:
 # MAGIC - **Email**: Serves as our core identity anchor across devices
-# MAGIC - **IFA**: Links to mobile app usage and cross-device behavior  
+# MAGIC - **IFA**: Consented Identifier for Advertising across applications/publishers.  
 # MAGIC - **IP Address**: Indicates household-level connections and geographic patterns
 # MAGIC - **Date**: Helps us understand recency and frequency of identity signals
 
@@ -110,9 +110,9 @@ coppa_filter = (F.col("request_kv._is_coppa") == False) | F.col(
 ).isNull()
 
 print("🔄 Creating consolidated identity information...")
-print("   📊 Grouping by: (email, ip_address, ifa)")
-print("   🔒 Applying COPPA compliance filters")
-print("   📈 Calculating frequency and recency metrics")
+print("📊 Grouping by: (email, ip_address, ifa)")
+print("🔒 Applying COPPA compliance filters")
+print("📈 Calculating frequency and recency metrics")
 
 # Create our consolidated identity aggregation
 identity_info_consolidated = (
@@ -172,15 +172,12 @@ display(identity_info_consolidated.limit(1000))
 # MAGIC - **Relationship Metrics**: Calculated frequency and recency for each combination
 # MAGIC
 # MAGIC ### 📋 Table Schema:
-# MAGIC 
-# MAGIC | Column Name | Description |
-# MAGIC |-------------|-------------|
-# MAGIC | `_server_email` | Hashed email address (primary key) |
-# MAGIC | `ip_address` | Associated IP address |
-# MAGIC | `_server_ifa` | Associated mobile device identifier |
-# MAGIC | `min_date` | First observation date |
-# MAGIC | `max_date` | Most recent observation date |
-# MAGIC | `n_occurances` | Total frequency count |
+# MAGIC - `_server_email` - Hashed email address (primary key)
+# MAGIC - `ip_address` - Associated IP address
+# MAGIC - `_server_ifa` - Associated mobile device identifier
+# MAGIC - `min_date` - First observation date
+# MAGIC - `max_date` - Most recent observation date  
+# MAGIC - `n_occurances` - Total frequency count
 # MAGIC
 # MAGIC ### 🔄 Next Steps:
 # MAGIC This consolidated table will now feed into our pairing logic:

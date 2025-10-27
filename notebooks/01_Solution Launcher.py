@@ -42,6 +42,12 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Run Required Libraries
+# MAGIC %pip install --quiet --upgrade databricks-sdk
+# MAGIC %restart_python
+
+# COMMAND ----------
+
 # DBTITLE 1,INPUT HERE
 catalog_name = "achu_demos"
 
@@ -89,11 +95,6 @@ catalog_name = "achu_demos"
 
 # COMMAND ----------
 
-# Run this in a notebook cell to display the installed SDK version
-%pip show databricks-sdk | grep -oP '(?<=Version: )\S+'
-
-# COMMAND ----------
-
 # MAGIC %md 
 # MAGIC
 # MAGIC #### 2. Launching the Dashboard
@@ -101,23 +102,6 @@ catalog_name = "achu_demos"
 # MAGIC Once the identity graph workflow has been created, you can generate a dashboard to quickly explore and monitor the results. This dashboard provides summary insights into the identity graph’s scale, coverage, and health, making it easy to validate pipeline success and communicate results to stakeholders.
 # MAGIC
 # MAGIC Click Run Cell on `RUN THIS: Launch AI/BI Dashboard` to launch dashboard creation.
-
-# COMMAND ----------
-
-# MAGIC %r
-# MAGIC library(sparklyr)
-# MAGIC x <- sql("SELECT * FROM achu_demos.bronze.impression_logs_prod")
-# MAGIC display(x)
-# MAGIC
-
-# COMMAND ----------
-
-"""This dashboard will populate once the job completes. {}"""
-
-# if 'job_id' in locals():
-# else look for hte job id by usin the name (store the job id in data )
-# Did you change the name of the job? 
- 
 
 # COMMAND ----------
 

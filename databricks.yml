@@ -1,5 +1,5 @@
 bundle:
-  name: simple_identity_graph
+  name: adtech_simple_identity_graph
 
 variables:
   # Project name for the Identity Graph solution accelerator
