@@ -31,14 +31,18 @@
 
 # COMMAND ----------
 
-# Load catalog name from configuration
+# Load catalog name and schema prefix from configuration
 import json
 
 with open("./data/catalog_name.json", "r") as f:
     config = json.load(f)
     catalog_name = config["catalog_name"]
+    schema_prefix = config.get("schema_prefix", "")
 
 print(f"✅ Loaded catalog name: {catalog_name}")
+if schema_prefix:
+    print(f"✅ Schema prefix: {schema_prefix}")
+    schema_prefix += "_"
 
 # COMMAND ----------
 
@@ -85,9 +89,9 @@ print("   💡 In production, you might use structured maps with metadata")
 
 # COMMAND ----------
 
-print(f"📂 Loading email-IFA data from: {catalog_name}.silver.email_ifa")
+print(f"📂 Loading email-IFA data from: {catalog_name}.{schema_prefix}silver.email_ifa")
 
-email_ifa_df = spark.table(f"{catalog_name}.silver.email_ifa")
+email_ifa_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ifa")
 
 print("🔄 Creating email-IFA aggregations...")
 print("   🏆 Separating primary (rank=1) and secondary (rank>1) IFAs")
@@ -119,9 +123,9 @@ print("✅ Email-IFA aggregations complete!")
 
 # COMMAND ----------
 
-print(f"📂 Loading email-IP data from: {catalog_name}.silver.email_ip")
+print(f"📂 Loading email-IP data from: {catalog_name}.{schema_prefix}silver.email_ip")
 
-email_ip_df = spark.table(f"{catalog_name}.silver.email_ip")
+email_ip_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ip")
 
 print("🔄 Creating email-IP aggregations...")
 print("   🏆 Separating primary (rank=1) and secondary (rank>1) IP addresses")
@@ -219,11 +223,11 @@ display(identity_graph.limit(1000))
 
 # COMMAND ----------
 
-print(f"💾 Saving final identity graph to: {catalog_name}.gold.identity_graph")
+print(f"💾 Saving final identity graph to: {catalog_name}.{schema_prefix}gold.identity_graph")
 print("   🏆 This is your production-ready identity graph!")
 
 identity_graph.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.gold.identity_graph"
+    f"{catalog_name}.{schema_prefix}gold.identity_graph"
 )
 
 print("✅ Successfully saved identity_graph to Gold layer!")

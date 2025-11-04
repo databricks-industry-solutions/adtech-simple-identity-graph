@@ -53,7 +53,10 @@ try:
     with open(config_path, "r") as f:
         config = json.load(f)
         catalog_name = config["catalog_name"]
+        schema_prefix = config.get("schema_prefix", "")
     print(f"✅ Loaded catalog name: {catalog_name}")
+    if schema_prefix:
+        print(f"✅ Schema prefix: {schema_prefix}")
 except FileNotFoundError:
     print("❌ ERROR: catalog_name.json not found. Cannot determine catalog to clean up.")
     print("   Please ensure the workflow has been run at least once to generate this file.")
@@ -103,9 +106,10 @@ try:
             
             # Check each workflow schema for tables
             for schema in workflow_schemas:
-                if schema in existing_schemas:
+                prefixed_schema = f"{schema_prefix}{schema}"
+                if prefixed_schema in existing_schemas:
                     try:
-                        tables_df = spark.sql(f"SHOW TABLES IN {catalog_name}.{schema}")
+                        tables_df = spark.sql(f"SHOW TABLES IN {catalog_name}.{prefixed_schema}")
                         schema_tables = [row.tableName for row in tables_df.collect()]
                         existing_tables[schema] = schema_tables
                         
@@ -116,7 +120,7 @@ try:
                         
                         workflow_objects_found[schema] = found_workflow_tables
                         
-                        print(f"   📋 {schema} schema:")
+                        print(f"   📋 {prefixed_schema} schema:")
                         if found_workflow_tables:
                             print(f"      🎯 Workflow tables: {found_workflow_tables}")
                         if other_tables:
@@ -125,11 +129,11 @@ try:
                             print(f"      📭 Empty schema")
                             
                     except Exception as e:
-                        print(f"   ⚠️  Could not list tables in {schema}: {str(e)}")
+                        print(f"   ⚠️  Could not list tables in {prefixed_schema}: {str(e)}")
                         existing_tables[schema] = []
                         workflow_objects_found[schema] = []
                 else:
-                    print(f"   📂 {schema} schema: Not found")
+                    print(f"   📂 {prefixed_schema} schema: Not found")
                     
         except Exception as e:
             print(f"   ⚠️  Could not list schemas: {str(e)}")
@@ -160,10 +164,11 @@ if catalog_exists:
     print("\n📋 Deleting workflow tables...")
     for schema_name in workflow_schemas:
         if schema_name in workflow_objects_found:
+            prefixed_schema_name = f"{schema_prefix}{schema_name}"
             tables_to_delete = workflow_objects_found[schema_name]
             for table_name in tables_to_delete:
                 try:
-                    full_table_name = f"{catalog_name}.{schema_name}.{table_name}"
+                    full_table_name = f"{catalog_name}.{prefixed_schema_name}.{table_name}"
                     print(f"   🗑️  Dropping table: {full_table_name}")
                     spark.sql(f"DROP TABLE IF EXISTS {full_table_name}")
                     deleted_tables.append(full_table_name)
@@ -174,21 +179,22 @@ if catalog_exists:
     # Step 3.2: Check and delete empty schemas
     print("\n📂 Checking for empty schemas to delete...")
     for schema_name in workflow_schemas:
-        if schema_name in existing_schemas:
+        prefixed_schema_name = f"{schema_prefix}{schema_name}"
+        if prefixed_schema_name in existing_schemas:
             try:
                 # Re-check if schema is now empty
-                tables_df = spark.sql(f"SHOW TABLES IN {catalog_name}.{schema_name}")
+                tables_df = spark.sql(f"SHOW TABLES IN {catalog_name}.{prefixed_schema_name}")
                 remaining_tables = [row.tableName for row in tables_df.collect()]
                 
                 if not remaining_tables:  # Schema is empty
-                    print(f"   🗑️  Dropping empty schema: {catalog_name}.{schema_name}")
-                    spark.sql(f"DROP SCHEMA IF EXISTS {catalog_name}.{schema_name}")
-                    deleted_schemas.append(f"{catalog_name}.{schema_name}")
-                    print(f"   ✅ Deleted empty schema: {catalog_name}.{schema_name}")
+                    print(f"   🗑️  Dropping empty schema: {catalog_name}.{prefixed_schema_name}")
+                    spark.sql(f"DROP SCHEMA IF EXISTS {catalog_name}.{prefixed_schema_name}")
+                    deleted_schemas.append(f"{catalog_name}.{prefixed_schema_name}")
+                    print(f"   ✅ Deleted empty schema: {catalog_name}.{prefixed_schema_name}")
                 else:
-                    print(f"   📦 Keeping schema {catalog_name}.{schema_name} (contains {len(remaining_tables)} other tables)")
+                    print(f"   📦 Keeping schema {catalog_name}.{prefixed_schema_name} (contains {len(remaining_tables)} other tables)")
             except Exception as e:
-                print(f"   ❌ ERROR checking/deleting schema {schema_name}: {str(e)}")
+                print(f"   ❌ ERROR checking/deleting schema {prefixed_schema_name}: {str(e)}")
     
     # Step 3.3: Check and delete catalog if empty
     print(f"\n🗄️  Checking if catalog '{catalog_name}' is empty...")

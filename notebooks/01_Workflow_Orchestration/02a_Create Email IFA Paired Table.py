@@ -42,14 +42,18 @@
 
 # COMMAND ----------
 
-# Load catalog name from configuration
+# Load catalog name and schema prefix from configuration
 import json
 
 with open("./data/catalog_name.json", "r") as f:
     config = json.load(f)
     catalog_name = config["catalog_name"]
+    schema_prefix = config.get("schema_prefix", "")
 
 print(f"✅ Loaded catalog name: {catalog_name}")
+if schema_prefix:
+    print(f"✅ Schema prefix: {schema_prefix}")
+    schema_prefix += "_"
 
 # COMMAND ----------
 
@@ -86,10 +90,10 @@ print("   📈 Order by: n_occurances DESC, max_date DESC")
 
 # COMMAND ----------
 
-print(f"📂 Loading consolidated identity data from: {catalog_name}.silver.identity_info_consolidated")
+print(f"📂 Loading consolidated identity data from: {catalog_name}.{schema_prefix}silver.identity_info_consolidated")
 
 identity_info_consolidated = spark.table(
-    f"{catalog_name}.silver.identity_info_consolidated"
+    f"{catalog_name}.{schema_prefix}silver.identity_info_consolidated"
 )
 
 print("✅ Successfully loaded identity_info_consolidated table")
@@ -150,10 +154,10 @@ display(email_ifa.orderBy("_server_email", "primary_rank").limit(1000))
 
 # COMMAND ----------
 
-print(f"💾 Saving email-IFA paired table to: {catalog_name}.silver.email_ifa")
+print(f"💾 Saving email-IFA paired table to: {catalog_name}.{schema_prefix}silver.email_ifa")
 
 email_ifa.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.silver.email_ifa"
+    f"{catalog_name}.{schema_prefix}silver.email_ifa"
 )
 
 print("✅ Successfully saved email_ifa table!")

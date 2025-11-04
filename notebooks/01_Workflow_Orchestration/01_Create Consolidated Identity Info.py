@@ -33,14 +33,18 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# Load catalog name from configuration
+# Load catalog name and schema prefix from configuration
 import json
 
 with open("./data/catalog_name.json", "r") as f:
     config = json.load(f)
     catalog_name = config["catalog_name"]
+    schema_prefix = config.get("schema_prefix", "")
 
 print(f"✅ Loaded catalog name: {catalog_name}")
+if schema_prefix:
+    print(f"✅ Schema prefix: {schema_prefix}")
+    schema_prefix += "_"
 
 # COMMAND ----------
 
@@ -51,7 +55,7 @@ print(f"✅ Loaded catalog name: {catalog_name}")
 
 # COMMAND ----------
 
-impression_logs = spark.table(f"{catalog_name}.bronze.impression_logs_prod")
+impression_logs = spark.table(f"{catalog_name}.{schema_prefix}bronze.impression_logs_prod")
 
 # COMMAND ----------
 
@@ -138,10 +142,10 @@ identity_info_consolidated = (
 # COMMAND ----------
 
 # 💾 Save to Unity Catalog Silver layer
-print(f"💾 Saving consolidated identity data to: {catalog_name}.silver.identity_info_consolidated")
+print(f"💾 Saving consolidated identity data to: {catalog_name}.{schema_prefix}silver.identity_info_consolidated")
 
 identity_info_consolidated.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.silver.identity_info_consolidated"
+    f"{catalog_name}.{schema_prefix}silver.identity_info_consolidated"
 )
 
 print("✅ Successfully saved identity_info_consolidated table!")

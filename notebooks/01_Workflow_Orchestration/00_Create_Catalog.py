@@ -21,7 +21,7 @@
 
 # COMMAND ----------
 
-# Load catalog name from configuration
+# Load catalog name and schema prefix from configuration
 import json
 current_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
 current_dir = "/Workspace"+"/".join(current_path.split("/")[:-1])
@@ -29,8 +29,13 @@ print(f"{current_dir}/data/catalog_name.json")
 with open(f"{current_dir}/data/catalog_name.json", "r") as f:
     config = json.load(f)
     catalog_name = config["catalog_name"]
+    # Schema prefix is optional - if present, it will be prepended to bronze, silver, gold schemas
+    # Example: prefix="adtech_" results in schemas like "adtech_bronze", "adtech_silver", "adtech_gold"
+    schema_prefix = config.get("schema_prefix", "adtech")
 
 print(f"✅ Loaded catalog name: {catalog_name}")
+if schema_prefix:
+    print(f"✅ Schema prefix: {schema_prefix}")
 
 # COMMAND ----------
 
@@ -68,8 +73,9 @@ display(spark.sql(create_catalog_stm))
 # COMMAND ----------
 
 for schema_name in required_schemas:
-    create_schema_stm = f"CREATE SCHEMA IF NOT EXISTS {catalog_name}.{schema_name}"
-    print(f"✅ Creating schema: {catalog_name}.{schema_name}")
+    prefixed_schema_name = f"{schema_prefix}_{schema_name}"
+    create_schema_stm = f"CREATE SCHEMA IF NOT EXISTS {catalog_name}.{prefixed_schema_name}"
+    print(f"✅ Creating schema: {catalog_name}.{prefixed_schema_name}")
     spark.sql(create_schema_stm)
 
 # COMMAND ----------
@@ -106,7 +112,7 @@ def json_type_to_spark_type(json_type):
     else:
         return type_mapping.get(json_type, "STRING")  # fallback to STRING if type not found
 
-def create_table_from_schema(schema_file_path, table_name, catalog_name, schema_name):
+def create_table_from_schema(schema_file_path, table_name, catalog_name, schema_name, schema_prefix=""):
     """Create an empty table from a JSON schema definition"""
     try:
         with open(schema_file_path, "r") as f:
@@ -130,7 +136,8 @@ def create_table_from_schema(schema_file_path, table_name, catalog_name, schema_
             columns.append(column_def)
         
         # Create the DDL statement with table comment if available
-        full_table_name = f"{catalog_name}.{schema_name}.{table_name}"
+        prefixed_schema_name = f"{schema_prefix}{schema_name}"
+        full_table_name = f"{catalog_name}.{prefixed_schema_name}.{table_name}"
         table_comment = f" COMMENT '{table_description}'" if table_description else ""
         
         create_table_ddl = f"""
@@ -178,7 +185,8 @@ for table_def in table_definitions:
         schema_file_path, 
         table_def['table_name'],
         catalog_name,
-        table_def['target_schema']
+        table_def['target_schema'],
+        schema_prefix
     )
 
 # COMMAND ----------

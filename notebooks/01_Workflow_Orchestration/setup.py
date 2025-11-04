@@ -50,7 +50,10 @@ displayHTML(setup_info_html)
 
 # COMMAND ----------
 
-catalog_info = {"catalog_name": catalog_name}
+catalog_info = {
+  "catalog_name": catalog_name,
+  "schema_prefix": "adtech"
+}
 with open(f"{workflow_dir}/data/catalog_name.json", "w") as f:
     json.dump(catalog_info, f)
 
