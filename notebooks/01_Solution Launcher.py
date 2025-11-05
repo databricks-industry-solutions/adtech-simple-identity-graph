@@ -49,7 +49,7 @@
 # COMMAND ----------
 
 # DBTITLE 1,INPUT HERE
-catalog_name = "achu_demos"
+catalog_name = "media_advertising"
 
 # COMMAND ----------
 
