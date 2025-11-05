@@ -57,7 +57,7 @@ resources:
       # Email notifications
       email_notifications:
         on_failure:
-          - "${workspace.current_user.email}"
+          - "${workspace.current_user.userName}"
         no_alert_for_skipped_runs: true
       
       # Optional: Schedule to run daily
