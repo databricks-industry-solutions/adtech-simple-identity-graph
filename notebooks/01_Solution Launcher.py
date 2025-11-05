@@ -64,7 +64,7 @@ catalog_name = "media_advertising"
 # MAGIC 1. Consolidating the identities into an **optimized identity-based table** (silver), 
 # MAGIC 2. Then, generating proxies at the **individual and household levels** (silver), and 
 # MAGIC 3. Finally, all the information is placed together for a quick and consumable **identity graph**.
-# MAGIC <img src="./assets/img/medallion-data-arch-annotated.png" style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
+# MAGIC <img src="../assets/img/medallion-data-arch-annotated.png" style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
 # MAGIC
 # MAGIC Tables in this workflow:
 # MAGIC | Step |  Table                       | Layer   | Purpose                                        |
@@ -84,7 +84,10 @@ catalog_name = "media_advertising"
 # MAGIC Click Run Cell on `RUN THIS: Create + Launch Workflow` to launch job creation.
 # MAGIC
 # MAGIC The workflow will generate the tables required for an identity graph. Each task links to a notebook explaining the logic behind it.
-# MAGIC - To dive deeper, **open the generated job page** and click on a task to open its notebook and review the code + rationale.
+# MAGIC
+# MAGIC <img src="../assets/img/db-task-annotated.png" style="object-fit:cover; object-position:50% 30%; width:300px; height:300px; zoom:1.2;"></img>
+# MAGIC <br></br>
+# MAGIC - To dive deeper, **open the generated job page** and click on a task to open its notebook to review the code + rationale. If you are interested in design principles and things to consider when creating an identity graph, we highly encourage you to review each individual task to better understand key decision points.
 # MAGIC
 # MAGIC - You can also **explore the resulting tables** in Unity Catalog once the workflow has run at least once.
 
