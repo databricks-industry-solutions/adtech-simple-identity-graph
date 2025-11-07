@@ -1,14 +1,14 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Step 2a: Create Email-IFA Paired Table
+# MAGIC # Part 2a: Create Email-IFA Paired Table
 # MAGIC
-# MAGIC This notebook creates the first pairing table that links email addresses to their **primary mobile device identifiers (IFAs)**. This is a critical step in building cross-device identity connections.
+# MAGIC This notebook creates the first pairing table that links email addresses to their **primary Identifier for Advertising (IFA)**. IFAs are consented advertising identifiers that work across applications on a single device (such as mobile phones, tablets, and CTVs).
 # MAGIC
 # MAGIC ## 🎯 Objective
-# MAGIC For each email address, determine the **single best** IFA (Identifier for Advertising) to use as the primary mobile device connection.
+# MAGIC For each email address, determine the **single best** IFA (Identifier for Advertising) to use as the primary cross-application advertising connection.
 # MAGIC
 # MAGIC ## 📊 Input Data
-# MAGIC - **Source**: `{catalog_name}.silver.identity_info_consolidated` (from Step 1)
+# MAGIC - **Source**: `{catalog_name}.silver.identity_info_consolidated` (from Part 1)
 # MAGIC - **Focus**: Email-IFA relationships with frequency and recency metrics
 # MAGIC
 # MAGIC ## 🧮 Primary ID Selection Logic
@@ -17,9 +17,10 @@
 # MAGIC 2. **Most recent** (`max_date`) - In case of ties, choose the IFA observed most recently
 # MAGIC
 # MAGIC ## 💡 Why This Matters
-# MAGIC - **Cross-device tracking**: Links email behavior to mobile app engagement
-# MAGIC - **Audience targeting**: Enables mobile ad targeting based on email segments
-# MAGIC - **Attribution**: Connects mobile conversions back to email-driven awareness
+# MAGIC - **Cross-application tracking**: Links email behavior to app engagement across devices (mobile, tablet, CTV)
+# MAGIC - **Audience targeting**: Enables app-based ad targeting based on email segments
+# MAGIC - **Attribution**: Connects in-app conversions back to email-driven awareness
+# MAGIC - **Device-specific reach**: IFAs are tied to a single device, enabling precise targeting
 # MAGIC
 # MAGIC ## 📈 Output
 # MAGIC - **Destination**: `{catalog_name}.silver.email_ifa`
@@ -28,7 +29,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2a.1: Setup Primary ID Resolution Logic
+# MAGIC ## Step 1: Setup Primary ID Resolution Logic
 # MAGIC
 # MAGIC We'll create a window function that implements our **waterfall logic** for determining primary IFAs:
 # MAGIC
@@ -38,7 +39,7 @@
 # MAGIC   1. `n_occurances DESC` (highest frequency first)
 # MAGIC   2. `max_date DESC` (most recent as tiebreaker)
 # MAGIC
-# MAGIC This ranking helps us identify the **most relevant mobile device** for each email address.
+# MAGIC This ranking helps us identify the **most relevant advertising identifier** (across mobile, tablet, CTV, etc.) for each email address.
 
 # COMMAND ----------
 
@@ -63,7 +64,7 @@ from pyspark.sql import functions as F
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2a.2: Define Window Function
+# MAGIC ## Step 2: Define Window Function
 # MAGIC
 # MAGIC Create the window specification for our primary IFA selection logic.
 
@@ -84,9 +85,9 @@ print("   📈 Order by: n_occurances DESC, max_date DESC")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2a.3: Load Consolidated Identity Data
+# MAGIC ## Step 3: Load Consolidated Identity Data
 # MAGIC
-# MAGIC Load our consolidated identity information from Step 1 to begin the pairing process.
+# MAGIC Load our consolidated identity information from Part 1 to begin the pairing process.
 
 # COMMAND ----------
 
@@ -101,7 +102,7 @@ print("✅ Successfully loaded identity_info_consolidated table")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2a.4: Create Email-IFA Paired Table
+# MAGIC ## Step 4: Create Email-IFA Paired Table
 # MAGIC
 # MAGIC Now we'll apply our window function to create the email-IFA pairing table with ranking logic.
 # MAGIC
@@ -109,14 +110,14 @@ print("✅ Successfully loaded identity_info_consolidated table")
 # MAGIC 1. **Filter**: Keep only records with valid IFA values (remove nulls)
 # MAGIC 2. **Group**: Aggregate by `(email, IFA)` pairs to sum up all occurrences
 # MAGIC 3. **Rank**: Apply window function to rank IFAs for each email
-# MAGIC 4. **Primary Selection**: IFA with `primary_rank=1` becomes the primary device for that email
+# MAGIC 4. **Primary Selection**: IFA with `primary_rank=1` becomes the primary advertising identifier for that email
 
 # COMMAND ----------
 
 print("🔄 Creating email-IFA paired table...")
-print("   🗂️  Filtering for valid IFA values")
-print("   📊 Grouping by (email, IFA) pairs")
-print("   🏆 Ranking IFAs using waterfall logic")
+print("🗂️ Filtering for valid IFA values")
+print("📊 Grouping by (email, IFA) pairs")
+print("🏆 Ranking IFAs using waterfall logic")
 
 # Create the email-IFA paired table with ranking
 email_ifa = (
@@ -136,7 +137,7 @@ print("✅ Email-IFA paired table created successfully!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2a.5: Explore Email-IFA Relationships
+# MAGIC ## Step 5: Explore Email-IFA Relationships
 # MAGIC
 # MAGIC Let's examine the results to understand the email-to-IFA mapping patterns.
 
@@ -148,7 +149,7 @@ display(email_ifa.orderBy("_server_email", "primary_rank").limit(1000))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2a.6: Save to Silver Layer
+# MAGIC ## Step 6: Save to Silver Layer
 # MAGIC
 # MAGIC Save our email-IFA paired table to Unity Catalog for use in the final identity graph creation.
 
@@ -165,35 +166,31 @@ print("✅ Successfully saved email_ifa table!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 🏁 Step 2a Complete!
+# MAGIC ## 🏁 Part 2a Complete!
 # MAGIC
-# MAGIC We've successfully created our email-IFA pairing table with primary device selection logic.
+# MAGIC We've successfully created our email-IFA pairing table with primary advertising identifier selection logic.
 # MAGIC
 # MAGIC ### ✅ What We Accomplished:
-# MAGIC - **Mobile Device Linking**: Connected email addresses to their primary mobile devices
+# MAGIC - **Cross-Application Linking**: Connected email addresses to their primary advertising identifiers
 # MAGIC - **Waterfall Logic**: Implemented frequency + recency ranking for primary IFA selection
-# MAGIC - **Cross-device Foundation**: Created the mobile component of our identity graph
+# MAGIC - **Device-Specific Targeting**: Created the foundation for app-based advertising across mobile, tablet, and CTV devices
 # MAGIC
 # MAGIC ### 📋 Table Schema (`email_ifa`):
-# MAGIC 
+# MAGIC
 # MAGIC | Column Name | Description |
 # MAGIC |-------------|-------------|
-# MAGIC | `_server_email` | Hashed email address |
-# MAGIC | `_server_ifa` | Mobile device identifier (IFA) |
+# MAGIC | `_server_email` | The hashed email address as recorded by the ad server (core identifier proxy) |
+# MAGIC | `_server_ifa` | The identifier for advertising as reported by the ad server (consented Advertising ID tied to a single device) |
 # MAGIC | `min_date` | First time this email-IFA pair was observed |
 # MAGIC | `max_date` | Most recent observation of this pair |
 # MAGIC | `n_occurances` | Total frequency of this email-IFA combination |
 # MAGIC | `primary_rank` | Ranking (1 = primary IFA for this email) |
 # MAGIC
 # MAGIC ### 🔄 Next Steps:
-# MAGIC - **`02b_Create Email IP Paired Table`** - Create similar pairing for IP addresses
-# MAGIC - **`03_Create Identity Graph`** - Join email-IFA and email-IP tables to create final graph
+# MAGIC - **Part 2b: `02b_Create Email IP Paired Table`** - Create similar pairing for IP addresses
+# MAGIC - **Part 3: `03_Create Identity Graph`** - Join email-IFA and email-IP tables to create final graph
 # MAGIC
 # MAGIC ### 💡 Key Insights:
-# MAGIC - Emails with `primary_rank=1` represent the **strongest mobile device connection**
-# MAGIC - Secondary ranks (2, 3, etc.) capture additional mobile devices for cross-device scenarios
-# MAGIC - This pairing enables **mobile ad targeting** based on email-driven audience segments
-
-# COMMAND ----------
-
-
+# MAGIC - Emails with `primary_rank=1` represent the **most frequently and recently used advertising identifier** for that email
+# MAGIC - Secondary ranks (2, 3, etc.) capture additional devices tied to the same email (e.g., idfa from iPhone, gaid from Android tablet, rida from Roku)
+# MAGIC - Each IFA is tied to a single device, enabling precise cross-application targeting on that specific device

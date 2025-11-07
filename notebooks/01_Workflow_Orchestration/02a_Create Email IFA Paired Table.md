@@ -1,12 +1,12 @@
-# Step 2a: Create Email-IFA Paired Table
+# Part 2a: Create Email-IFA Paired Table
 
-This notebook creates the first pairing table that links email addresses to their **primary mobile device identifiers (IFAs)**. This is a critical step in building cross-device identity connections.
+This notebook creates the first pairing table that links email addresses to their **primary Identifier for Advertising (IFA)**. IFAs are consented advertising identifiers that work across applications on a single device (such as mobile phones, tablets, and CTVs).
 
 ## 🎯 Objective
-For each email address, determine the **single best** IFA (Identifier for Advertising) to use as the primary mobile device connection.
+For each email address, determine the **single best** IFA (Identifier for Advertising) to use as the primary cross-application advertising connection.
 
 ## 📊 Input Data
-- **Source**: `{catalog_name}.silver.identity_info_consolidated` (from Step 1)
+- **Source**: `{catalog_name}.silver.identity_info_consolidated` (from Part 1)
 - **Focus**: Email-IFA relationships with frequency and recency metrics
 
 ## 🧮 Primary ID Selection Logic
@@ -15,9 +15,10 @@ For each email, we select the "primary" IFA using **waterfall logic**:
 2. **Most recent** (`max_date`) - In case of ties, choose the IFA observed most recently
 
 ## 💡 Why This Matters
-- **Cross-device tracking**: Links email behavior to mobile app engagement
-- **Audience targeting**: Enables mobile ad targeting based on email segments
-- **Attribution**: Connects mobile conversions back to email-driven awareness
+- **Cross-application tracking**: Links email behavior to app engagement across devices (mobile, tablet, CTV)
+- **Audience targeting**: Enables app-based ad targeting based on email segments
+- **Attribution**: Connects in-app conversions back to email-driven awareness
+- **Device-specific reach**: IFAs are tied to a single device, enabling precise targeting
 
 ## 📈 Output
 - **Destination**: `{catalog_name}.silver.email_ifa`
@@ -25,7 +26,7 @@ For each email, we select the "primary" IFA using **waterfall logic**:
 
 ---
 
-## Step 2a.1: Setup Primary ID Resolution Logic
+## Step 1: Setup Primary ID Resolution Logic
 
 We'll create a window function that implements our **waterfall logic** for determining primary IFAs:
 
@@ -35,19 +36,23 @@ We'll create a window function that implements our **waterfall logic** for deter
   1. `n_occurances DESC` (highest frequency first)
   2. `max_date DESC` (most recent as tiebreaker)
 
-This ranking helps us identify the **most relevant mobile device** for each email address.
+This ranking helps us identify the **most relevant advertising identifier** (across mobile, tablet, CTV, etc.) for each email address.
 
 ---
 
 ```python
-# Load catalog name from configuration
+# Load catalog name and schema prefix from configuration
 import json
 
 with open("./data/catalog_name.json", "r") as f:
     config = json.load(f)
     catalog_name = config["catalog_name"]
+    schema_prefix = config.get("schema_prefix", "")
 
 print(f"✅ Loaded catalog name: {catalog_name}")
+if schema_prefix:
+    print(f"✅ Schema prefix: {schema_prefix}")
+    schema_prefix += "_"
 ```
 
 ---
@@ -59,7 +64,7 @@ from pyspark.sql import functions as F
 
 ---
 
-## Step 2a.2: Define Window Function
+## Step 2: Define Window Function
 
 Create the window specification for our primary IFA selection logic.
 
@@ -81,17 +86,17 @@ print("   📈 Order by: n_occurances DESC, max_date DESC")
 
 ---
 
-## Step 2a.3: Load Consolidated Identity Data
+## Step 3: Load Consolidated Identity Data
 
-Load our consolidated identity information from Step 1 to begin the pairing process.
+Load our consolidated identity information from Part 1 to begin the pairing process.
 
 ---
 
 ```python
-print(f"📂 Loading consolidated identity data from: {catalog_name}.silver.identity_info_consolidated")
+print(f"📂 Loading consolidated identity data from: {catalog_name}.{schema_prefix}silver.identity_info_consolidated")
 
 identity_info_consolidated = spark.table(
-    f"{catalog_name}.silver.identity_info_consolidated"
+    f"{catalog_name}.{schema_prefix}silver.identity_info_consolidated"
 )
 
 print("✅ Successfully loaded identity_info_consolidated table")
@@ -99,7 +104,7 @@ print("✅ Successfully loaded identity_info_consolidated table")
 
 ---
 
-## Step 2a.4: Create Email-IFA Paired Table
+## Step 4: Create Email-IFA Paired Table
 
 Now we'll apply our window function to create the email-IFA pairing table with ranking logic.
 
@@ -107,13 +112,13 @@ Now we'll apply our window function to create the email-IFA pairing table with r
 1. **Filter**: Keep only records with valid IFA values (remove nulls)
 2. **Group**: Aggregate by `(email, IFA)` pairs to sum up all occurrences
 3. **Rank**: Apply window function to rank IFAs for each email
-4. **Primary Selection**: IFA with `primary_rank=1` becomes the primary device for that email
+4. **Primary Selection**: IFA with `primary_rank=1` becomes the primary advertising identifier for that email
 
 ---
 
 ```python
 print("🔄 Creating email-IFA paired table...")
-print("   🗂️  Filtering for valid IFA values")
+print("   🗂️ Filtering for valid IFA values")
 print("   📊 Grouping by (email, IFA) pairs")
 print("   🏆 Ranking IFAs using waterfall logic")
 
@@ -135,7 +140,7 @@ print("✅ Email-IFA paired table created successfully!")
 
 ---
 
-## Step 2a.5: Explore Email-IFA Relationships
+## Step 5: Explore Email-IFA Relationships
 
 Let's examine the results to understand the email-to-IFA mapping patterns.
 
@@ -148,17 +153,17 @@ display(email_ifa.orderBy("_server_email", "primary_rank").limit(1000))
 
 ---
 
-## Step 2a.6: Save to Silver Layer
+## Step 6: Save to Silver Layer
 
 Save our email-IFA paired table to Unity Catalog for use in the final identity graph creation.
 
 ---
 
 ```python
-print(f"💾 Saving email-IFA paired table to: {catalog_name}.silver.email_ifa")
+print(f"💾 Saving email-IFA paired table to: {catalog_name}.{schema_prefix}silver.email_ifa")
 
 email_ifa.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.silver.email_ifa"
+    f"{catalog_name}.{schema_prefix}silver.email_ifa"
 )
 
 print("✅ Successfully saved email_ifa table!")
@@ -166,32 +171,32 @@ print("✅ Successfully saved email_ifa table!")
 
 ---
 
-## 🏁 Step 2a Complete!
+## 🏁 Part 2a Complete!
 
-We've successfully created our email-IFA pairing table with primary device selection logic.
+We've successfully created our email-IFA pairing table with primary advertising identifier selection logic.
 
 ### ✅ What We Accomplished:
-- **Mobile Device Linking**: Connected email addresses to their primary mobile devices
+- **Cross-Application Linking**: Connected email addresses to their primary advertising identifiers
 - **Waterfall Logic**: Implemented frequency + recency ranking for primary IFA selection
-- **Cross-device Foundation**: Created the mobile component of our identity graph
+- **Device-Specific Targeting**: Created the foundation for app-based advertising across mobile, tablet, and CTV devices
 
 ### 📋 Table Schema (`email_ifa`):
 
 | Column Name | Description |
 |-------------|-------------|
-| `_server_email` | the hashed email address recorded by the ad server |
-| `_server_ifa` | Mobile device identifier (IFA) |
+| `_server_email` | The hashed email address as recorded by the ad server (core identifier proxy) |
+| `_server_ifa` | The identifier for advertising as reported by the ad server (consented Advertising ID tied to a single device) |
 | `min_date` | First time this email-IFA pair was observed |
 | `max_date` | Most recent observation of this pair |
 | `n_occurances` | Total frequency of this email-IFA combination |
 | `primary_rank` | Ranking (1 = primary IFA for this email) |
 
 ### 🔄 Next Steps:
-- **`02b_Create Email IP Paired Table`** - Create similar pairing for IP addresses
-- **`03_Create Identity Graph`** - Join email-IFA and email-IP tables to create final graph
+- **Part 2b: `02b_Create Email IP Paired Table`** - Create similar pairing for IP addresses
+- **Part 3: `03_Create Identity Graph`** - Join email-IFA and email-IP tables to create final graph
 
 ### 💡 Key Insights:
-- Emails with `primary_rank=1` represent the **strongest mobile device connection**
-- Secondary ranks (2, 3, etc.) capture additional mobile devices for cross-device scenarios
-- This pairing enables **mobile ad targeting** based on email-driven audience segments
+- Emails with `primary_rank=1` represent the **most frequently and recently used advertising identifier** for that email
+- Secondary ranks (2, 3, etc.) capture additional devices tied to the same email (e.g., idfa from iPhone, gaid from Android tablet, rida from Roku)
+- Each IFA is tied to a single device, enabling precise cross-application targeting on that specific device
 

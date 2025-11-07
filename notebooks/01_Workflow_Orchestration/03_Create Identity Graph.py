@@ -1,32 +1,39 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Step 3: Create Final Digital Identity Graph
+# MAGIC # Part 3: Create Final Digital Identity Graph
 # MAGIC
 # MAGIC This is the final step where we combine our email-IFA and email-IP paired tables to create a comprehensive digital identity graph ready for activation and analytics.
 # MAGIC
 # MAGIC ## 🎯 Objective
-# MAGIC Join the two pairing tables (email-IFA and email-IP) to create a unified identity graph that connects each email to its primary mobile device and household IP address.
+# MAGIC
+# MAGIC Join the two pairing tables (email-IFA and email-IP) to create a unified identity graph that connects each core identifier (email) to its primary Advertising ID and household IP address.
 # MAGIC
 # MAGIC ## 📊 Input Data
-# MAGIC - **Email-IFA Table**: `{catalog_name}.silver.email_ifa` (from Step 2a)
-# MAGIC - **Email-IP Table**: `{catalog_name}.silver.email_ip` (from Step 2b)
+# MAGIC
+# MAGIC - **Email-IFA Table**: `{catalog_name}.silver.email_ifa` (from Part 2a)  
+# MAGIC - **Email-IP Table**: `{catalog_name}.silver.email_ip` (from Part 2b)
 # MAGIC
 # MAGIC ## 🔗 Join Strategy
+# MAGIC
 # MAGIC We'll perform a **full outer join** on email addresses because:
-# MAGIC - Some emails may only have mobile activity (IFA but no consistent IP)
-# MAGIC - Some emails may only have web/household activity (IP but no mobile IFA)
+# MAGIC
+# MAGIC - Some emails may only have recorded/associated IFAs
+# MAGIC - Some emails may only have recorded/associated IP addresses
 # MAGIC - Most emails will have both, creating complete cross-device profiles
 # MAGIC
 # MAGIC ## 🏗️ Graph Structure
+# MAGIC
 # MAGIC Each row in our final identity graph represents a unique individual/household with:
-# MAGIC - **Unique ID**: Generated UUID for this identity
-# MAGIC - **Email**: Core identity anchor (hashed)
-# MAGIC - **Primary IFA**: Best mobile device identifier
+# MAGIC
+# MAGIC - **Unique ID**: Generated UUID for this identity  
+# MAGIC - **Email**: Core identity anchor (hashed)  
+# MAGIC - **Primary IFA**: Best advertising identifier (tied to a single device, used across applications)
 # MAGIC - **Primary IP**: Best household/location identifier  
-# MAGIC - **Secondary identifiers**: Additional IFAs/IPs for expanded reach
+# MAGIC - **Secondary identifiers**: Additional IFAs/IPs for expanded reach  
 # MAGIC - **Temporal data**: When this identity was first/last observed
 # MAGIC
 # MAGIC ## 📈 Output
+# MAGIC
 # MAGIC - **Destination**: `{catalog_name}.gold.identity_graph` (Gold layer - production ready!)
 
 # COMMAND ----------
@@ -52,7 +59,7 @@ from pyspark.sql import functions as F
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3.1: Define Secondary Identifier Mapping
+# MAGIC ## Step 1: Define Secondary Identifier Mapping
 # MAGIC
 # MAGIC We'll set up how to handle secondary (non-primary) identifiers in our final graph. For this simplified version, we're keeping them as simple lists.
 
@@ -77,13 +84,13 @@ secondary_ip_map = F.col("ip_address")
 secondary_ifa_map = F.col("_server_ifa")
 
 print("✅ Configured secondary identifier mapping strategy")
-print("   📋 Using simple lists for secondary IPs and IFAs")
-print("   💡 In production, you might use structured maps with metadata")
+print("📋 Using simple lists for secondary IPs and IFAs")
+print("💡 In production, you might use structured maps with metadata")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3.2: Prepare Email-IFA Aggregations
+# MAGIC ## Step 2: Prepare Email-IFA Aggregations
 # MAGIC
 # MAGIC Load and aggregate the email-IFA data to separate primary and secondary mobile identifiers.
 
@@ -94,8 +101,8 @@ print(f"📂 Loading email-IFA data from: {catalog_name}.{schema_prefix}silver.e
 email_ifa_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ifa")
 
 print("🔄 Creating email-IFA aggregations...")
-print("   🏆 Separating primary (rank=1) and secondary (rank>1) IFAs")
-print("   📊 Computing temporal bounds for each email")
+print("🏆 Separating primary (rank=1) and secondary (rank>1) IFAs")
+print("📊 Computing temporal bounds for each email")
 
 # Aggregate IFA data by email, separating primary and secondary identifiers
 email_ifa_pairing = email_ifa_df.groupBy(F.col("_server_email")).agg(
@@ -103,7 +110,7 @@ email_ifa_pairing = email_ifa_df.groupBy(F.col("_server_email")).agg(
     F.collect_list(F.when((F.col("primary_rank") == 1), F.col("_server_ifa"))).alias(
         "primary_ifa_list"
     ),
-    # Secondary IFAs: Collect all IFAs with rank>1 (additional mobile devices)
+    # Secondary IFAs: Collect all IFAs with rank>1 (additional devices like tablets, CTVs)
     F.collect_list(F.when((F.col("primary_rank") != 1), secondary_ifa_map)).alias(
         "secondary_ifa_list"
     ),
@@ -117,7 +124,7 @@ print("✅ Email-IFA aggregations complete!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3.3: Prepare Email-IP Aggregations
+# MAGIC ## Step 3: Prepare Email-IP Aggregations
 # MAGIC
 # MAGIC Load and aggregate the email-IP data to separate primary and secondary household identifiers.
 
@@ -128,8 +135,8 @@ print(f"📂 Loading email-IP data from: {catalog_name}.{schema_prefix}silver.em
 email_ip_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ip")
 
 print("🔄 Creating email-IP aggregations...")
-print("   🏆 Separating primary (rank=1) and secondary (rank>1) IP addresses")
-print("   📊 Computing temporal bounds for each email")
+print("🏆 Separating primary (rank=1) and secondary (rank>1) IP addresses")
+print("📊 Computing temporal bounds for each email")
 
 # Aggregate IP data by email, separating primary and secondary identifiers
 email_ip_pairing = email_ip_df.groupBy(F.col("_server_email")).agg(
@@ -151,25 +158,26 @@ print("✅ Email-IP aggregations complete!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3.4: Create the Final Identity Graph
+# MAGIC ## Step 4: Create the Final Identity Graph
 # MAGIC
 # MAGIC Now we'll join our email-IP and email-IFA aggregations to create the comprehensive identity graph.
 # MAGIC
 # MAGIC ### 🔗 Full Outer Join Strategy:
+# MAGIC
 # MAGIC Since `email` is the common link between IFAs and IPs, we'll join on this column using a **full outer join**:
 # MAGIC
 # MAGIC - **Matched rows**: Emails found in both tables will be merged (most common case)
-# MAGIC - **IP-only rows**: Emails only in email-IP table (web/desktop users without mobile)
-# MAGIC - **IFA-only rows**: Emails only in email-IFA table (mobile-only users)
+# MAGIC - **IP-only rows**: Emails only in email-IP table (web/desktop users without app-based activity)
+# MAGIC - **IFA-only rows**: Emails only in email-IFA table (app-only users across mobile, tablet, CTV, etc.)
 # MAGIC
 # MAGIC This ensures we capture **all identity signals** without losing any data.
 
 # COMMAND ----------
 
 print("🔗 Creating final identity graph...")
-print("   📊 Performing full outer join on email addresses")
-print("   🆔 Generating unique identity IDs")
-print("   📅 Computing overall temporal bounds")
+print("📊 Performing full outer join on email addresses")
+print("🆔 Generating unique identity IDs")
+print("📅 Computing overall temporal bounds")
 
 # Define join condition
 join_on = [F.col("a._server_email") == F.col("b._server_email")]
@@ -177,7 +185,7 @@ join_on = [F.col("a._server_email") == F.col("b._server_email")]
 # Create the final identity graph
 identity_graph = (
     email_ip_pairing.alias("a")  # Email-IP data (household/location)
-    .join(email_ifa_pairing.alias("b"), join_on, "full")  # Email-IFA data (mobile)
+    .join(email_ifa_pairing.alias("b"), join_on, "full")  # Email-IFA data (cross-app advertising IDs)
     .select(
         # Generate unique identity ID for each person/household
         F.expr("uuid()").alias("megacorp_id"),
@@ -204,27 +212,27 @@ print("✅ Final identity graph created successfully!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3.5: Explore the Final Identity Graph
+# MAGIC ## Step 5: Explore the Final Identity Graph
 # MAGIC
 # MAGIC Let's examine our completed identity graph to understand the cross-device connections we've created.
 
 # COMMAND ----------
 
 print("📊 Sample of the final digital identity graph:")
-print("   🔍 Each row represents a unified identity with cross-device connections")
+print("🔍 Each row represents a unified identity with cross-device connections")
 display(identity_graph.limit(1000))
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3.6: Save to Gold Layer
+# MAGIC ## Step 6: Save to Gold Layer
 # MAGIC
 # MAGIC Save our final identity graph to the Gold layer - this is our production-ready, business-ready dataset.
 
 # COMMAND ----------
 
 print(f"💾 Saving final identity graph to: {catalog_name}.{schema_prefix}gold.identity_graph")
-print("   🏆 This is your production-ready identity graph!")
+print("🏆 This is your production-ready identity graph!")
 
 identity_graph.write.format("delta").mode("overwrite").saveAsTable(
     f"{catalog_name}.{schema_prefix}gold.identity_graph"
@@ -240,20 +248,21 @@ print("✅ Successfully saved identity_graph to Gold layer!")
 # MAGIC Congratulations! You've successfully built a comprehensive digital identity graph using Databricks.
 # MAGIC
 # MAGIC ### ✅ What We've Accomplished:
-# MAGIC - **Cross-device Identity**: Connected emails to their primary mobile devices and household IPs
+# MAGIC
+# MAGIC - **Cross-device Identity**: Connected emails to their primary advertising identifiers (mobile, tablet, CTV) and household IPs
 # MAGIC - **Waterfall Logic**: Implemented frequency + recency ranking for optimal identifier selection
 # MAGIC - **Comprehensive Coverage**: Used full outer joins to capture all identity signals
 # MAGIC - **Production Ready**: Created a Gold layer table ready for activation and analytics
 # MAGIC
 # MAGIC ### 📋 Final Schema (`identity_graph`):
-# MAGIC 
+# MAGIC
 # MAGIC | Column Name | Description |
 # MAGIC |-------------|-------------|
 # MAGIC | `megacorp_id` | Unique UUID for this identity |
-# MAGIC | `email_sha256` | Hashed email address (core identity anchor) |
-# MAGIC | `primary_ifa` | Primary mobile device identifier |
+# MAGIC | `email_sha256` | The hashed email address as recorded by the ad server (core identifier proxy) |
+# MAGIC | `primary_ifa` | The identifier for advertising as reported by the ad server (primary consented Advertising ID tied to a single device) |
 # MAGIC | `primary_ip` | Primary household IP address |
-# MAGIC | `secondary_ifa_list` | Additional mobile device identifiers |
+# MAGIC | `secondary_ifa_list` | Additional advertising identifiers for other devices (e.g., gaid, idfa, rida, tifa, lguid) |
 # MAGIC | `secondary_ip_list` | Additional IP addresses (work, travel, etc.) |
 # MAGIC | `min_date` | First observation of this identity |
 # MAGIC | `max_date` | Most recent observation of this identity |
@@ -266,14 +275,14 @@ print("✅ Successfully saved identity_graph to Gold layer!")
 # MAGIC - Analyze customer journey patterns
 # MAGIC
 # MAGIC #### 🎯 **Audience Activation**:
-# MAGIC - Export primary IFAs for mobile app targeting
+# MAGIC - Export primary IFAs for app-based targeting (mobile, tablet, CTV)
 # MAGIC - Use IP addresses for household/location-based campaigns
 # MAGIC - Create lookalike audiences based on cross-device behavior
 # MAGIC
 # MAGIC #### 📈 **Measurement & Optimization**:
 # MAGIC - Implement frequency capping across devices
 # MAGIC - Measure incremental reach of cross-device campaigns
-# MAGIC - Optimize ad spend allocation between mobile and web
+# MAGIC - Optimize ad spend allocation between app-based (mobile, tablet, CTV) and web channels
 # MAGIC
 # MAGIC ### 💡 Production Enhancements:
 # MAGIC - **Data Quality**: Add identity confidence scoring

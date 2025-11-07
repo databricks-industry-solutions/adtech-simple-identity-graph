@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Step 2b: Create Email-IP Paired Table
+# MAGIC # Part 2b: Create Email-IP Paired Table
 # MAGIC
 # MAGIC This notebook creates the second pairing table that links email addresses to their **primary IP addresses**. IP addresses often represent household-level connections and geographic patterns.
 # MAGIC
@@ -8,7 +8,7 @@
 # MAGIC For each email address, determine the **single best** IP address to use as the primary household/location connection.
 # MAGIC
 # MAGIC ## 📊 Input Data
-# MAGIC - **Source**: `{catalog_name}.silver.identity_info_consolidated` (from Step 1)
+# MAGIC - **Source**: `{catalog_name}.silver.identity_info_consolidated` (from Part 1)
 # MAGIC - **Focus**: Email-IP relationships with frequency and recency metrics
 # MAGIC
 # MAGIC ## 🧮 Primary ID Selection Logic
@@ -44,9 +44,9 @@ if schema_prefix:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2b.1: Setup Primary ID Resolution Logic
+# MAGIC ## Step 1: Setup Primary ID Resolution Logic
 # MAGIC
-# MAGIC We'll use the same window function approach as in Step 2a, but now for IP addresses instead of IFAs.
+# MAGIC We'll use the same window function approach as in Part 2a, but now for IP addresses instead of IFAs.
 
 # COMMAND ----------
 
@@ -56,7 +56,7 @@ from pyspark.sql import functions as F
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2b.2: Define Window Function
+# MAGIC ## Step 2: Define Window Function
 # MAGIC
 # MAGIC Create the same waterfall logic window specification for IP address selection.
 
@@ -71,8 +71,8 @@ primary_id_resolution_logic = Window.partitionBy("_server_email").orderBy(
 )
 
 print("✅ Defined primary ID resolution window function for IP addresses")
-print("   📊 Partition by: _server_email")
-print("   📈 Order by: n_occurances DESC, max_date DESC")
+print("📊 Partition by: _server_email")
+print("📈 Order by: n_occurances DESC, max_date DESC")
 
 # COMMAND ----------
 
@@ -97,7 +97,7 @@ print("   📈 Order by: n_occurances DESC, max_date DESC")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2b.3: Load Consolidated Identity Data
+# MAGIC ## Step 3: Load Consolidated Identity Data
 
 # COMMAND ----------
 
@@ -112,7 +112,7 @@ print("✅ Successfully loaded identity_info_consolidated table")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2b.4: Create Email-IP Paired Table
+# MAGIC ## Step 4: Create Email-IP Paired Table
 # MAGIC
 # MAGIC Now we'll create the email-IP pairing table using the same logic as the IFA pairing, but grouping by IP addresses.
 # MAGIC
@@ -125,9 +125,9 @@ print("✅ Successfully loaded identity_info_consolidated table")
 # COMMAND ----------
 
 print("🔄 Creating email-IP paired table...")
-print("   🗂️  Filtering for valid IP address values")
-print("   📊 Grouping by (email, IP) pairs")  
-print("   🏆 Ranking IP addresses using waterfall logic")
+print("🗂️ Filtering for valid IP address values")
+print("📊 Grouping by (email, IP) pairs")
+print("🏆 Ranking IP addresses using waterfall logic")
 
 # Create the email-IP paired table with ranking
 email_ip = (
@@ -147,7 +147,7 @@ print("✅ Email-IP paired table created successfully!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2b.5: Explore Email-IP Relationships
+# MAGIC ## Step 5: Explore Email-IP Relationships
 # MAGIC
 # MAGIC Let's examine the results to understand the email-to-IP mapping patterns.
 
@@ -159,7 +159,7 @@ display(email_ip.orderBy("_server_email", "primary_rank").limit(1000))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 2b.6: Save to Silver Layer
+# MAGIC ## Step 6: Save to Silver Layer
 # MAGIC
 # MAGIC Save our email-IP paired table to Unity Catalog for use in the final identity graph creation.
 
@@ -176,7 +176,7 @@ print("✅ Successfully saved email_ip table!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 🏁 Step 2b Complete!
+# MAGIC ## 🏁 Part 2b Complete!
 # MAGIC
 # MAGIC We've successfully created our email-IP pairing table with primary household selection logic.
 # MAGIC
@@ -186,10 +186,10 @@ print("✅ Successfully saved email_ip table!")
 # MAGIC - **Geographic Foundation**: Created the household/location component of our identity graph
 # MAGIC
 # MAGIC ### 📋 Table Schema (`email_ip`):
-# MAGIC 
+# MAGIC
 # MAGIC | Column Name | Description |
 # MAGIC |-------------|-------------|
-# MAGIC | `_server_email` | Hashed email address |
+# MAGIC | `_server_email` | The hashed email address as recorded by the ad server (core identifier proxy) |
 # MAGIC | `ip_address` | IP address (household/location identifier) |
 # MAGIC | `min_date` | First time this email-IP pair was observed |
 # MAGIC | `max_date` | Most recent observation of this pair |
@@ -197,9 +197,9 @@ print("✅ Successfully saved email_ip table!")
 # MAGIC | `primary_rank` | Ranking (1 = primary IP for this email) |
 # MAGIC
 # MAGIC ### 🔄 Next Steps:
-# MAGIC - **`03_Create Identity Graph`** - Join email-IFA and email-IP tables to create final comprehensive identity graph
+# MAGIC - **Part 3: `03_Create Identity Graph`** - Join email-IFA and email-IP tables to create final comprehensive identity graph
 # MAGIC
 # MAGIC ### 💡 Key Insights:
 # MAGIC - Emails with `primary_rank=1` represent the **strongest household/location connection**
-# MAGIC - Secondary ranks capture additional locations (work, travel, etc.) for comprehensive targeting
-# MAGIC - This pairing enables **household-level targeting** and **geographic audience insights**
+# MAGIC - Secondary ranks capture additional IP addresses used by the same email (e.g., work, travel, vacation homes)
+# MAGIC - IP addresses help identify household-level patterns and geographic targeting opportunities

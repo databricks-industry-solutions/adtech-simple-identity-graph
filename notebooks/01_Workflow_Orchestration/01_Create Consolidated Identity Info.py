@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Step 1: Create Consolidated Identity Information
+# MAGIC # Part 1: Create Consolidated Identity Information
 # MAGIC
 # MAGIC This notebook consolidates identity information from raw impression logs to create the foundation for our digital identity graph. This is the first step in our medallion architecture workflow.
 # MAGIC
@@ -10,8 +10,8 @@
 # MAGIC ## 📊 Input Data
 # MAGIC - **Source**: `{catalog_name}.bronze.impression_logs_prod` (Raw impression logs)
 # MAGIC - **Key Fields**: 
-# MAGIC   - `request_kv._server_email` - Hashed email addresses
-# MAGIC   - `request_kv._server_ifa` - Identifier for Advertising (mobile device IDs)
+# MAGIC   - `request_kv._server_email` - The hashed email address as recorded by the ad server (our core identifier proxy)
+# MAGIC   - `request_kv._server_ifa` - The identifier for advertising as reported by the ad server (consented Advertising ID tied to a single device, used across applications)
 # MAGIC   - `ip_address` - IP addresses from ad requests
 # MAGIC   - `date` - Impression timestamps
 # MAGIC   - `request_kv._is_coppa` - COPPA compliance flag
@@ -49,7 +49,7 @@ if schema_prefix:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 1.1: Load Raw Impression Logs
+# MAGIC ## Step 1: Load Raw Impression Logs
 # MAGIC
 # MAGIC We start by loading the raw impression logs from our Bronze layer. These logs contain the digital advertising events that include identity signals we'll use to build our graph.
 
@@ -60,21 +60,21 @@ impression_logs = spark.table(f"{catalog_name}.{schema_prefix}bronze.impression_
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 1.2: Explore the Data Structure
+# MAGIC ## Step 2: Explore the Data Structure
 # MAGIC
 # MAGIC The impression logs contain several key fields for identity resolution:
 # MAGIC
 # MAGIC ### 🔍 Key Data Fields:
 # MAGIC 1. **`request_kv`** - JSON object containing identity signals:
-# MAGIC    - `_server_email` - Hashed email address (our primary identifier)
-# MAGIC    - `_server_ifa` - Identifier for Advertising (mobile device ID)
+# MAGIC    - `_server_email` - The hashed email address as recorded by the ad server (our core identifier proxy)
+# MAGIC    - `_server_ifa` - The identifier for advertising as reported by the ad server (consented Advertising ID tied to a single device, used across applications)
 # MAGIC    - `_is_coppa` - COPPA compliance flag (children's privacy protection)
 # MAGIC 2. **`ip_address`** - IP address captured during the ad request
 # MAGIC 3. **`date`** - Timestamp of the impression event
 # MAGIC
 # MAGIC ### 🎯 Why These Fields Matter:
 # MAGIC - **Email**: Serves as our core identity anchor across devices
-# MAGIC - **IFA**: Consented Identifier for Advertising across applications/publishers.  
+# MAGIC - **IFA**: Consented Advertising ID that works across applications on a single device (e.g., idfa, gaid, rida, tifa, lguid)
 # MAGIC - **IP Address**: Indicates household-level connections and geographic patterns
 # MAGIC - **Date**: Helps us understand recency and frequency of identity signals
 
@@ -85,7 +85,7 @@ display(impression_logs.limit(100))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 1.3: Create Identity Aggregations
+# MAGIC ## Step 3: Create Identity Aggregations
 # MAGIC
 # MAGIC Now we'll create our consolidated identity table by aggregating all observed `(email, ip, ifa)` combinations over time.
 # MAGIC
@@ -131,11 +131,10 @@ identity_info_consolidated = (
     )
 )
 
-
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 1.4: Save to Silver Layer
+# MAGIC ## Step 4: Save to Silver Layer
 # MAGIC
 # MAGIC We'll persist our consolidated identity information to the Silver layer in Unity Catalog. This becomes our clean, aggregated foundation for the next steps in our identity graph workflow.
 
@@ -153,7 +152,7 @@ print("✅ Successfully saved identity_info_consolidated table!")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 1.5: Explore the Results
+# MAGIC ## Step 5: Explore the Results
 # MAGIC
 # MAGIC Let's examine our consolidated identity table to understand the data patterns and validate our aggregations.
 
@@ -165,7 +164,7 @@ display(identity_info_consolidated.limit(1000))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 🏁 Step 1 Complete!
+# MAGIC ## 🏁 Part 1 Complete!
 # MAGIC
 # MAGIC We've successfully created our consolidated identity foundation table with:
 # MAGIC
@@ -175,17 +174,20 @@ display(identity_info_consolidated.limit(1000))
 # MAGIC - **Identity Aggregation**: Created unique `(email, ip, ifa)` combinations
 # MAGIC - **Relationship Metrics**: Calculated frequency and recency for each combination
 # MAGIC
-# MAGIC ### 📋 Table Schema:
-# MAGIC - `_server_email` - Hashed email address (primary key)
-# MAGIC - `ip_address` - Associated IP address
-# MAGIC - `_server_ifa` - Associated mobile device identifier
-# MAGIC - `min_date` - First observation date
-# MAGIC - `max_date` - Most recent observation date  
-# MAGIC - `n_occurances` - Total frequency count
+# MAGIC ### 📋 Table Schema (`identity_info_consolidated`):
+# MAGIC
+# MAGIC | Column Name | Description |
+# MAGIC |-------------|-------------|
+# MAGIC | `_server_email` | The hashed email address as recorded by the ad server (core identifier proxy) |
+# MAGIC | `ip_address` | The associated IP address |
+# MAGIC | `_server_ifa` | The associated IFA (consented advertising ID) as reported by the ad server |
+# MAGIC | `min_date` | First observation date of the `(email, ip, ifa)` combination|
+# MAGIC | `max_date` | Most recent observation date  of the `(email, ip, ifa)` combination |
+# MAGIC | `n_occurances` | Total frequency count of the `(email, ip, ifa)` combination |
 # MAGIC
 # MAGIC ### 🔄 Next Steps:
 # MAGIC This consolidated table will now feed into our pairing logic:
-# MAGIC 1. **`02a_Create Email IFA Paired Table`** - Links emails with their strongest IFA
-# MAGIC 2. **`02b_Create Email IP Paired Table`** - Links emails with their strongest IP
+# MAGIC 1. **Part 2a: `02a_Create Email IFA Paired Table`** - Links emails with their strongest IFA
+# MAGIC 2. **Part 2b: `02b_Create Email IP Paired Table`** - Links emails with their strongest IP
 # MAGIC
-# MAGIC The frequency and recency metrics we calculated here will drive the "waterfall logic" to determine the **primary** identifier for each email address.
+# MAGIC The frequency and recency metrics we calculated here will drive the "waterfall logic" to determine the **primary** identifiers for each email address.
