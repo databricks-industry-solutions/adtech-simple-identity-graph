@@ -72,8 +72,8 @@ primary_id_resolution_logic = Window.partitionBy("_server_email").orderBy(
 )
 
 print("✅ Defined primary ID resolution window function for IP addresses")
-print("   📊 Partition by: _server_email")
-print("   📈 Order by: n_occurances DESC, max_date DESC")
+print("📊 Partition by: _server_email")
+print("📈 Order by: n_occurances DESC, max_date DESC")
 ```
 
 ---
@@ -127,9 +127,9 @@ Now we'll create the email-IP pairing table using the same logic as the IFA pair
 
 ```python
 print("🔄 Creating email-IP paired table...")
-print("   🗂️ Filtering for valid IP address values")
-print("   📊 Grouping by (email, IP) pairs")
-print("   🏆 Ranking IP addresses using waterfall logic")
+print("🗂️ Filtering for valid IP address values")
+print("📊 Grouping by (email, IP) pairs")
+print("🏆 Ranking IP addresses using waterfall logic")
 
 # Create the email-IP paired table with ranking
 email_ip = (

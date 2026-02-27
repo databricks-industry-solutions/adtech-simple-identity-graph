@@ -1,6 +1,6 @@
 # Part 1: Create Consolidated Identity Information
 
-This notebook consolidates identity information from raw impression logs to create the foundation for our digital identity graph. This is the first step in our medallion architecture workflow.
+This notebook consolidates digital identity information from raw impression logs to create the foundation for our identity graph. This is the first step in our medallion architecture workflow.
 
 ## 🎯 Objective
 Transform raw impression logs into aggregated identity combinations that will serve as the basis for building email-to-identifier relationships.
@@ -180,21 +180,21 @@ We've successfully created our consolidated identity foundation table with:
 - **Identity Aggregation**: Created unique `(email, ip, ifa)` combinations
 - **Relationship Metrics**: Calculated frequency and recency for each combination
 
-### 📋 Table Schema:
+### 📋 Table Schema (`identity_info_consolidated`):
 
 | Column Name | Description |
 |-------------|-------------|
 | `_server_email` | The hashed email address as recorded by the ad server (core identifier proxy) |
-| `ip_address` | Associated IP address |
-| `_server_ifa` | The identifier for advertising as reported by the ad server (consented Advertising ID) |
-| `min_date` | First observation date |
-| `max_date` | Most recent observation date |
-| `n_occurances` | Total frequency count |
+| `ip_address` | The associated IP address |
+| `_server_ifa` | The associated IFA (consented advertising ID) as reported by the ad server |
+| `min_date` | First observation date of the `(email, ip, ifa)` combination|
+| `max_date` | Most recent observation date  of the `(email, ip, ifa)` combination |
+| `n_occurances` | Total frequency count of the `(email, ip, ifa)` combination |
 
 ### 🔄 Next Steps:
 This consolidated table will now feed into our pairing logic:
 1. **Part 2a: `02a_Create Email IFA Paired Table`** - Links emails with their strongest IFA
 2. **Part 2b: `02b_Create Email IP Paired Table`** - Links emails with their strongest IP
 
-The frequency and recency metrics we calculated here will drive the "waterfall logic" to determine the **primary** identifier for each email address.
+The frequency and recency metrics we calculated here will drive the "waterfall logic" to determine the **primary** identifiers for each email address.
 

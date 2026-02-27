@@ -10,7 +10,7 @@ For each email address, determine the **single best** IFA (Identifier for Advert
 - **Focus**: Email-IFA relationships with frequency and recency metrics
 
 ## 🧮 Primary ID Selection Logic
-For each email, we select the "primary" IFA using **waterfall logic**:
+For each email, we select the "primary" IFA using waterfall logic. This will be the same logic applied to select IPs, and can be applied to any additional digital identifiers your own:
 1. **Highest frequency** (`n_occurances`) - The IFA seen most often with this email
 2. **Most recent** (`max_date`) - In case of ties, choose the IFA observed most recently
 
@@ -118,9 +118,9 @@ Now we'll apply our window function to create the email-IFA pairing table with r
 
 ```python
 print("🔄 Creating email-IFA paired table...")
-print("   🗂️ Filtering for valid IFA values")
-print("   📊 Grouping by (email, IFA) pairs")
-print("   🏆 Ranking IFAs using waterfall logic")
+print("🗂️ Filtering for valid IFA values")
+print("📊 Grouping by (email, IFA) pairs")
+print("🏆 Ranking IFAs using waterfall logic")
 
 # Create the email-IFA paired table with ranking
 email_ifa = (
