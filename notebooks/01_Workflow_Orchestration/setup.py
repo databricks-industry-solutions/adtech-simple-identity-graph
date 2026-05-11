@@ -52,7 +52,11 @@ displayHTML(setup_info_html)
 
 catalog_info = {
   "catalog_name": catalog_name,
-  "schema_prefix": "adtech"
+  "schema_prefix": "adtech",
+  # Catalog hosting the read-only Delta-shared (eventually Marketplace-listed)
+  # `bronze.impression_logs_prod` table. Override here if your recipient mounted
+  # the share into a different catalog.
+  "bronze_source_catalog": "media_advertising"
 }
 with open(f"{workflow_dir}/data/catalog_name.json", "w") as f:
     json.dump(catalog_info, f)

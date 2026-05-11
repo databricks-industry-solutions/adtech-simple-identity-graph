@@ -17,25 +17,44 @@
 # MAGIC ## Prerequisites
 # MAGIC - Databricks workspace with Unity Catalog enabled
 # MAGIC - Permissions to create catalogs and schemas
-# MAGIC - Access to impression log data (will be generated in subsequent notebooks if using sample data)
+# MAGIC - Access to the impression-logs source table via Delta Share (lands at `<catalog>.<prefix>bronze.impression_logs_prod`)
 
 # COMMAND ----------
 
-# Load catalog name and schema prefix from configuration
+# Load catalog name and schema prefix.
+# Two sources are supported (widget wins so DAB job parameters take precedence over the file):
+#   1. Job parameters / notebook widgets `catalog_name` and `schema_prefix` (DAB flow)
+#   2. ./data/catalog_name.json written by 01_Workflow_Orchestration/setup.py (Solution Launcher flow)
 import json
+import os
+
+dbutils.widgets.text("catalog_name", "")
+dbutils.widgets.text("schema_prefix", "")
+
 current_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-current_dir = "/Workspace"+"/".join(current_path.split("/")[:-1])
-print(f"{current_dir}/data/catalog_name.json")
-with open(f"{current_dir}/data/catalog_name.json", "r") as f:
-    config = json.load(f)
+current_dir = "/Workspace" + "/".join(current_path.split("/")[:-1])
+config_path = f"{current_dir}/data/catalog_name.json"
+
+catalog_name = dbutils.widgets.get("catalog_name").strip()
+schema_prefix = dbutils.widgets.get("schema_prefix").strip()
+
+if not catalog_name and os.path.exists(config_path):
+    with open(config_path, "r") as f:
+        config = json.load(f)
     catalog_name = config["catalog_name"]
-    # Schema prefix is optional - if present, it will be prepended to bronze, silver, gold schemas
-    # Example: prefix="adtech_" results in schemas like "adtech_bronze", "adtech_silver", "adtech_gold"
-    schema_prefix = config.get("schema_prefix", "adtech")
+    if not schema_prefix:
+        schema_prefix = config.get("schema_prefix", "")
+
+if not catalog_name:
+    raise ValueError(
+        "catalog_name is empty. Pass --params catalog_name=<name> to `bundle run`, "
+        "or run the Solution Launcher (01_Solution Launcher.py) so setup.py writes the config file."
+    )
 
 print(f"✅ Loaded catalog name: {catalog_name}")
 if schema_prefix:
     print(f"✅ Schema prefix: {schema_prefix}")
+    schema_prefix += "_"
 
 # COMMAND ----------
 
@@ -50,18 +69,34 @@ if schema_prefix:
 # COMMAND ----------
 
 required_schemas = ["bronze", "silver", "gold"]
-create_catalog_stm = f"CREATE CATALOG IF NOT EXISTS {catalog_name}"
-
-print(f"✅ Creating catalog: {catalog_name}")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 1: Create the Main Catalog
+# MAGIC ### Step 1: Ensure the Catalog Exists
+# MAGIC
+# MAGIC On metastores that use **Default Storage** (no metastore-level storage root),
+# MAGIC a bare `CREATE CATALOG IF NOT EXISTS` will fail even when the catalog already
+# MAGIC exists — Unity Catalog validates the create statement before checking existence.
+# MAGIC We check `SHOW CATALOGS` first and only attempt to create when the catalog is missing.
 
 # COMMAND ----------
 
-display(spark.sql(create_catalog_stm))
+existing_catalogs = {row.catalog for row in spark.sql("SHOW CATALOGS").collect()}
+if catalog_name in existing_catalogs:
+    print(f"✅ Catalog already exists, reusing: {catalog_name}")
+else:
+    print(f"✅ Creating catalog: {catalog_name}")
+    try:
+        spark.sql(f"CREATE CATALOG {catalog_name}")
+    except Exception as e:
+        raise RuntimeError(
+            f"Could not create catalog '{catalog_name}'. If this workspace uses Default Storage, "
+            f"either (a) create the catalog ahead of time in the UI with Default Storage enabled, "
+            f"or (b) pre-create with an explicit storage location: "
+            f"`CREATE CATALOG {catalog_name} MANAGED LOCATION '<s3://... or abfss://...>'`. "
+            f"Underlying error: {e}"
+        ) from e
 
 # COMMAND ----------
 
@@ -73,7 +108,7 @@ display(spark.sql(create_catalog_stm))
 # COMMAND ----------
 
 for schema_name in required_schemas:
-    prefixed_schema_name = f"{schema_prefix}_{schema_name}"
+    prefixed_schema_name = f"{schema_prefix}{schema_name}"
     create_schema_stm = f"CREATE SCHEMA IF NOT EXISTS {catalog_name}.{prefixed_schema_name}"
     print(f"✅ Creating schema: {catalog_name}.{prefixed_schema_name}")
     spark.sql(create_schema_stm)

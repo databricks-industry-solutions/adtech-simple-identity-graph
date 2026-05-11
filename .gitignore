@@ -24,4 +24,8 @@ build/
 
 # Environment files
 .env
-.env.local 
+.env.local
+
+# Runtime artifacts written by notebooks/01_Workflow_Orchestration/setup.py
+notebooks/01_Workflow_Orchestration/data/catalog_name.json
+notebooks/01_Workflow_Orchestration/data/job_info.json

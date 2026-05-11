@@ -53,7 +53,24 @@ resources:
     identity_graph_workflow:
       name: "${var.project_name} - Identity Graph Workflow"
       description: "Constructs a simple identity graph from advertising impression logs using a medallion architecture (Bronze → Silver → Gold)"
-      
+
+      # Job parameters are auto-injected as widgets in every task. Pass at run time with:
+      #   databricks bundle run identity_graph_workflow \
+      #     --params catalog_name=foo,schema_prefix=adtech,bronze_source_catalog=<share/marketplace catalog>
+      # `catalog_name` + `schema_prefix` control where silver/gold get *written*.
+      # `bronze_source_catalog` is the catalog where the read-only Delta-shared (and eventually
+      # Marketplace-listed) impression_logs_prod table lives. Schema/table names are fixed at
+      # `bronze.impression_logs_prod` — only the catalog name will change between recipients.
+      # The Solution Launcher flow ignores these and uses notebooks/01_Workflow_Orchestration/data/catalog_name.json
+      # written by setup.py instead.
+      parameters:
+        - name: catalog_name
+          default: ""
+        - name: schema_prefix
+          default: "adtech"
+        - name: bronze_source_catalog
+          default: "media_advertising"
+
       # Email notifications
       email_notifications:
         on_failure:
@@ -70,19 +87,16 @@ resources:
       # Performance target
       max_concurrent_runs: 1
       
+      # All tasks run on serverless compute (matches the README "Serverless" badge,
+      # and serverless is UC-enabled by default — classic job clusters require
+      # data_security_mode: SINGLE_USER which is workspace-specific to wire up).
       tasks:
         # Task 0: Create catalog (setup)
         - task_key: 00_create_catalog
           notebook_task:
             notebook_path: "./notebooks/01_Workflow_Orchestration/00_Create_Catalog.py"
             source: WORKSPACE
-          new_cluster:
-            spark_version: "14.3.x-scala2.12"
-            node_type_id: "i3.xlarge"
-            num_workers: 2
-            spark_conf:
-              "spark.databricks.delta.preview.enabled": "true"
-        
+
         # Task 1: Create consolidated identity information (Silver layer)
         - task_key: 01_create_consolidated_identity_info
           depends_on:
@@ -90,11 +104,7 @@ resources:
           notebook_task:
             notebook_path: "./notebooks/01_Workflow_Orchestration/01_Create Consolidated Identity Info.py"
             source: WORKSPACE
-          new_cluster:
-            spark_version: "14.3.x-scala2.12"
-            node_type_id: "i3.xlarge"
-            num_workers: 2
-        
+
         # Task 2a: Create individual-level identity table (Email-IFA pairs)
         - task_key: 02a_create_email_ifa_pairs
           depends_on:
@@ -102,11 +112,7 @@ resources:
           notebook_task:
             notebook_path: "./notebooks/01_Workflow_Orchestration/02a_Create Email IFA Paired Table.py"
             source: WORKSPACE
-          new_cluster:
-            spark_version: "14.3.x-scala2.12"
-            node_type_id: "i3.xlarge"
-            num_workers: 2
-        
+
         # Task 2b: Create household-level identity table (Email-IP pairs)
         - task_key: 02b_create_email_ip_pairs
           depends_on:
@@ -114,11 +120,7 @@ resources:
           notebook_task:
             notebook_path: "./notebooks/01_Workflow_Orchestration/02b_Create Email IP Paired Table.py"
             source: WORKSPACE
-          new_cluster:
-            spark_version: "14.3.x-scala2.12"
-            node_type_id: "i3.xlarge"
-            num_workers: 2
-        
+
         # Task 3: Create final identity graph (Gold layer)
         - task_key: 03_create_identity_graph
           depends_on:
@@ -127,10 +129,6 @@ resources:
           notebook_task:
             notebook_path: "./notebooks/01_Workflow_Orchestration/03_Create Identity Graph.py"
             source: WORKSPACE
-          new_cluster:
-            spark_version: "14.3.x-scala2.12"
-            node_type_id: "i3.xlarge"
-            num_workers: 2
 
 # For more configuration options, see: https://docs.databricks.com/aws/en/dev-tools/bundles/settings
 
