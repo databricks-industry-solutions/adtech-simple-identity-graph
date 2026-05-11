@@ -132,6 +132,21 @@ This layered approach makes it easier to debug, maintain, and evolve as your mat
 
 ---
 
+## Prerequisites
+
+Before deploying, confirm the target workspace has:
+
+- **Unity Catalog enabled.** All tables in this accelerator are governed by UC.
+- **Serverless compute** (Jobs Serverless). The bundle deploys workflow tasks onto serverless. If serverless is unavailable in your region, change each task in `databricks.yml` to a `new_cluster` block with `data_security_mode: SINGLE_USER` so the cluster can talk to Unity Catalog.
+- **A target catalog you can write to.** You pass this catalog name as a job parameter (`catalog_name`) or via the Solution Launcher notebook. Two valid setups:
+  - **The catalog already exists.** The workflow will reuse it and create `bronze` / `silver` / `gold` schemas (optionally prefixed) inside it.
+  - **The catalog does not yet exist** *and* your metastore has a storage root configured. The workflow will create the catalog for you.
+  - ⚠️ If your account uses **Default Storage** (no metastore-level storage root), pre-create the catalog from the UI with Default Storage selected, or create it once with an explicit `MANAGED LOCATION '<s3://… or abfss://…>'` clause. Then point the workflow at it.
+- **Permissions** to create schemas and tables inside that catalog.
+- **The impression-logs source share accepted.** The bronze table `<catalog>.<prefix>bronze.impression_logs_prod` is provisioned via Delta Share — see [Source Data](#source-data) below.
+
+---
+
 ## Installation Guidelines
 
 ### 1. Clone the Project
@@ -160,13 +175,13 @@ Navigate to the Deployments tab in the Asset Bundle UI (🚀 icon) and click "Ru
 
 ---
 
-## Data Generation
+## Source Data
 
-The synthetic data used in this solution accelerator was generated using:
-- [**dbldatagen**](https://github.com/databrickslabs/dbldatagen) - Databricks Labs Data Generator for creating large-scale synthetic datasets
-- [**Faker**](https://github.com/joke2k/faker) - Python library for generating realistic fake data
+The bronze table this accelerator reads from — `<catalog>.<prefix>bronze.impression_logs_prod` — is supplied via **Delta Share** from a Databricks-managed upstream producer. Before running the workflow, accept the share into your workspace so the table lands at the expected catalog/schema path.
 
-These tools were used during development to create sample impression logs and identity data for demonstration purposes.
+> _TODO: link the share name / acceptance instructions here once finalized._
+
+The synthetic dataset behind that shared table was originally generated with [**dbldatagen**](https://github.com/databrickslabs/dbldatagen) and [**Faker**](https://github.com/joke2k/faker). You do not need to install either of those packages to run this accelerator — the share provides the data.
 
 ---
 

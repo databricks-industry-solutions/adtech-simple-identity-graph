@@ -12,7 +12,7 @@
 # MAGIC - **Focus**: Email-IFA relationships with frequency and recency metrics
 # MAGIC
 # MAGIC ## 🧮 Primary ID Selection Logic
-# MAGIC For each email, we select the "primary" IFA using **waterfall logic** (This will be the same logic applied to select IPs):
+# MAGIC For each email, we select the "primary" IFA using waterfall logic. This will be the same logic applied to select IPs, and can be applied to any additional digital identifiers your own:
 # MAGIC 1. **Highest frequency** (`n_occurances`) - The IFA seen most often with this email
 # MAGIC 2. **Most recent** (`max_date`) - In case of ties, choose the IFA observed most recently
 # MAGIC
@@ -23,7 +23,7 @@
 # MAGIC - **Device-specific reach**: IFAs are tied to a single device, enabling precise targeting
 # MAGIC
 # MAGIC ## 📈 Output
-# MAGIC - **Destination**: `{catalog_name}.silver.email_ifa`
+# MAGIC - **Destination**: `{catalog_name}.silver.email_ifa_pairs`
 # MAGIC - **Schema**: Email addresses with their primary and ranked IFA associations
 
 # COMMAND ----------
@@ -43,13 +43,30 @@
 
 # COMMAND ----------
 
-# Load catalog name and schema prefix from configuration
+# Two config sources are supported (widget wins so DAB job parameters take precedence over the file):
+#   1. Job parameters / notebook widgets `catalog_name` and `schema_prefix` (DAB flow)
+#   2. ./data/catalog_name.json written by 01_Workflow_Orchestration/setup.py (Solution Launcher flow)
 import json
+import os
 
-with open("./data/catalog_name.json", "r") as f:
-    config = json.load(f)
+dbutils.widgets.text("catalog_name", "")
+dbutils.widgets.text("schema_prefix", "")
+
+catalog_name = dbutils.widgets.get("catalog_name").strip()
+schema_prefix = dbutils.widgets.get("schema_prefix").strip()
+
+if not catalog_name and os.path.exists("./data/catalog_name.json"):
+    with open("./data/catalog_name.json", "r") as f:
+        config = json.load(f)
     catalog_name = config["catalog_name"]
-    schema_prefix = config.get("schema_prefix", "")
+    if not schema_prefix:
+        schema_prefix = config.get("schema_prefix", "")
+
+if not catalog_name:
+    raise ValueError(
+        "catalog_name is empty. Pass --params catalog_name=<name> to `bundle run`, "
+        "or run the Solution Launcher first."
+    )
 
 print(f"✅ Loaded catalog name: {catalog_name}")
 if schema_prefix:
@@ -155,10 +172,10 @@ display(email_ifa.orderBy("_server_email", "primary_rank").limit(1000))
 
 # COMMAND ----------
 
-print(f"💾 Saving email-IFA paired table to: {catalog_name}.{schema_prefix}silver.email_ifa")
+print(f"💾 Saving email-IFA paired table to: {catalog_name}.{schema_prefix}silver.email_ifa_pairs")
 
 email_ifa.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.{schema_prefix}silver.email_ifa"
+    f"{catalog_name}.{schema_prefix}silver.email_ifa_pairs"
 )
 
 print("✅ Successfully saved email_ifa table!")

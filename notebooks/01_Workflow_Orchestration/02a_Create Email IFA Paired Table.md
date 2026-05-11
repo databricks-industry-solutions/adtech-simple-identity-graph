@@ -21,7 +21,7 @@ For each email, we select the "primary" IFA using waterfall logic. This will be 
 - **Device-specific reach**: IFAs are tied to a single device, enabling precise targeting
 
 ## 📈 Output
-- **Destination**: `{catalog_name}.silver.email_ifa`
+- **Destination**: `{catalog_name}.silver.email_ifa_pairs`
 - **Schema**: Email addresses with their primary and ranked IFA associations
 
 ---
@@ -160,10 +160,10 @@ Save our email-IFA paired table to Unity Catalog for use in the final identity g
 ---
 
 ```python
-print(f"💾 Saving email-IFA paired table to: {catalog_name}.{schema_prefix}silver.email_ifa")
+print(f"💾 Saving email-IFA paired table to: {catalog_name}.{schema_prefix}silver.email_ifa_pairs")
 
 email_ifa.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.{schema_prefix}silver.email_ifa"
+    f"{catalog_name}.{schema_prefix}silver.email_ifa_pairs"
 )
 
 print("✅ Successfully saved email_ifa table!")

@@ -10,8 +10,8 @@
 # MAGIC
 # MAGIC ## 📊 Input Data
 # MAGIC
-# MAGIC - **Email-IFA Table**: `{catalog_name}.silver.email_ifa` (from Part 2a)  
-# MAGIC - **Email-IP Table**: `{catalog_name}.silver.email_ip` (from Part 2b)
+# MAGIC - **Email-IFA Table**: `{catalog_name}.silver.email_ifa_pairs` (from Part 2a)  
+# MAGIC - **Email-IP Table**: `{catalog_name}.silver.email_ip_pairs` (from Part 2b)
 # MAGIC
 # MAGIC ## 🔗 Join Strategy
 # MAGIC
@@ -38,13 +38,30 @@
 
 # COMMAND ----------
 
-# Load catalog name and schema prefix from configuration
+# Two config sources are supported (widget wins so DAB job parameters take precedence over the file):
+#   1. Job parameters / notebook widgets `catalog_name` and `schema_prefix` (DAB flow)
+#   2. ./data/catalog_name.json written by 01_Workflow_Orchestration/setup.py (Solution Launcher flow)
 import json
+import os
 
-with open("./data/catalog_name.json", "r") as f:
-    config = json.load(f)
+dbutils.widgets.text("catalog_name", "")
+dbutils.widgets.text("schema_prefix", "")
+
+catalog_name = dbutils.widgets.get("catalog_name").strip()
+schema_prefix = dbutils.widgets.get("schema_prefix").strip()
+
+if not catalog_name and os.path.exists("./data/catalog_name.json"):
+    with open("./data/catalog_name.json", "r") as f:
+        config = json.load(f)
     catalog_name = config["catalog_name"]
-    schema_prefix = config.get("schema_prefix", "")
+    if not schema_prefix:
+        schema_prefix = config.get("schema_prefix", "")
+
+if not catalog_name:
+    raise ValueError(
+        "catalog_name is empty. Pass --params catalog_name=<name> to `bundle run`, "
+        "or run the Solution Launcher first."
+    )
 
 print(f"✅ Loaded catalog name: {catalog_name}")
 if schema_prefix:
@@ -96,9 +113,9 @@ print("💡 In production, you might use structured maps with metadata")
 
 # COMMAND ----------
 
-print(f"📂 Loading email-IFA data from: {catalog_name}.{schema_prefix}silver.email_ifa")
+print(f"📂 Loading email-IFA data from: {catalog_name}.{schema_prefix}silver.email_ifa_pairs")
 
-email_ifa_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ifa")
+email_ifa_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ifa_pairs")
 
 print("🔄 Creating email-IFA aggregations...")
 print("🏆 Separating primary (rank=1) and secondary (rank>1) IFAs")
@@ -130,9 +147,9 @@ print("✅ Email-IFA aggregations complete!")
 
 # COMMAND ----------
 
-print(f"📂 Loading email-IP data from: {catalog_name}.{schema_prefix}silver.email_ip")
+print(f"📂 Loading email-IP data from: {catalog_name}.{schema_prefix}silver.email_ip_pairs")
 
-email_ip_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ip")
+email_ip_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ip_pairs")
 
 print("🔄 Creating email-IP aggregations...")
 print("🏆 Separating primary (rank=1) and secondary (rank>1) IP addresses")

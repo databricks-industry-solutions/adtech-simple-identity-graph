@@ -21,7 +21,7 @@ For each email, we select the "primary" IP using **waterfall logic** (same as IF
 - **Fraud detection**: Helps identify suspicious IP/email combinations
 
 ## 📈 Output
-- **Destination**: `{catalog_name}.silver.email_ip`
+- **Destination**: `{catalog_name}.silver.email_ip_pairs`
 - **Schema**: Email addresses with their primary and ranked IP associations
 
 ---
@@ -169,10 +169,10 @@ Save our email-IP paired table to Unity Catalog for use in the final identity gr
 ---
 
 ```python
-print(f"💾 Saving email-IP paired table to: {catalog_name}.{schema_prefix}silver.email_ip")
+print(f"💾 Saving email-IP paired table to: {catalog_name}.{schema_prefix}silver.email_ip_pairs")
 
 email_ip.write.format("delta").mode("overwrite").saveAsTable(
-    f"{catalog_name}.{schema_prefix}silver.email_ip"
+    f"{catalog_name}.{schema_prefix}silver.email_ip_pairs"
 )
 
 print("✅ Successfully saved email_ip table!")

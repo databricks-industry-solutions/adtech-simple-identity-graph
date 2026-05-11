@@ -8,8 +8,8 @@ Join the two pairing tables (email-IFA and email-IP) to create a unified identit
 
 ## 📊 Input Data
 
-- **Email-IFA Table**: `{catalog_name}.silver.email_ifa` (from Part 2a)  
-- **Email-IP Table**: `{catalog_name}.silver.email_ip` (from Part 2b)
+- **Email-IFA Table**: `{catalog_name}.silver.email_ifa_pairs` (from Part 2a)  
+- **Email-IP Table**: `{catalog_name}.silver.email_ip_pairs` (from Part 2b)
 
 ## 🔗 Join Strategy
 
@@ -99,9 +99,9 @@ Load and aggregate the email-IFA data to separate primary and secondary mobile i
 ---
 
 ```python
-print(f"📂 Loading email-IFA data from: {catalog_name}.{schema_prefix}silver.email_ifa")
+print(f"📂 Loading email-IFA data from: {catalog_name}.{schema_prefix}silver.email_ifa_pairs")
 
-email_ifa_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ifa")
+email_ifa_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ifa_pairs")
 
 print("🔄 Creating email-IFA aggregations...")
 print("🏆 Separating primary (rank=1) and secondary (rank>1) IFAs")
@@ -134,9 +134,9 @@ Load and aggregate the email-IP data to separate primary and secondary household
 ---
 
 ```python
-print(f"📂 Loading email-IP data from: {catalog_name}.{schema_prefix}silver.email_ip")
+print(f"📂 Loading email-IP data from: {catalog_name}.{schema_prefix}silver.email_ip_pairs")
 
-email_ip_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ip")
+email_ip_df = spark.table(f"{catalog_name}.{schema_prefix}silver.email_ip_pairs")
 
 print("🔄 Creating email-IP aggregations...")
 print("🏆 Separating primary (rank=1) and secondary (rank>1) IP addresses")

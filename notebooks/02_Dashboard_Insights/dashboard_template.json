@@ -4,7 +4,7 @@
       "name": "f30d786f",
       "displayName": "Identity Graph",
       "queryLines": [
-        "SELECT * FROM {{catalog_name}}.gold.identity_graph"
+        "SELECT * FROM {{catalog_name}}.{{schema_prefix}}gold.identity_graph"
       ]
     },
     {
@@ -16,7 +16,7 @@
         "COUNT(DISTINCT megacorp_id) AS `Individuals`, \n",
         "COUNT(DISTINCT primary_ip) AS `Primary IPs`,\n",
         "COUNT( DISTINCT CASE WHEN primary_ip IS NOT NULL THEN megacorp_id END) AS `Individuals with Primary IPs`  \n",
-        "FROM {{catalog_name}}.gold.identity_graph)\n",
+        "FROM {{catalog_name}}.{{schema_prefix}}gold.identity_graph)\n",
         "\n",
         "SELECT *,`Individuals with Primary IPs` / `Individuals` AS pct_matched FROM primary_ip_info"
       ]
@@ -30,7 +30,7 @@
         "COUNT(DISTINCT megacorp_id) AS `Individuals`, \n",
         "COUNT(DISTINCT primary_ifa) AS `Primary IFAs`,\n",
         "COUNT( DISTINCT CASE WHEN primary_ifa IS NOT NULL THEN megacorp_id END) AS `Individuals with Primary IFAs`  \n",
-        "FROM {{catalog_name}}.gold.identity_graph)\n",
+        "FROM {{catalog_name}}.{{schema_prefix}}gold.identity_graph)\n",
         "\n",
         "SELECT * FROM primary_ifa_info"
       ],
@@ -48,11 +48,11 @@
       "queryLines": [
         "WITH id_graph_emails AS (\n",
         "  SELECT min_date, COUNT(DISTINCT email_sha256) AS n_matched_emails \n",
-        "  FROM {{catalog_name}}.gold.identity_graph\n",
+        "  FROM {{catalog_name}}.{{schema_prefix}}gold.identity_graph\n",
         "  GROUP BY min_date),\n",
         "\n",
         "server_emails AS (SELECT date, COUNT(DISTINCT request_kv._server_email) AS server_emails \n",
-        "FROM {{catalog_name}}.bronze.impression_logs_prod\n",
+        "FROM {{catalog_name}}.{{schema_prefix}}bronze.impression_logs_prod\n",
         "GROUP BY date)\n",
         "\n",
         "\n",

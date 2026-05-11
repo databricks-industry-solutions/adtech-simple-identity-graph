@@ -42,28 +42,39 @@ import json
 import os
 from pathlib import Path
 
-# Load catalog name from configuration
+# Two config sources are supported (widget wins so DAB job parameters take precedence over the file):
+#   1. Job parameters / notebook widgets `catalog_name` and `schema_prefix` (DAB flow)
+#   2. data/catalog_name.json written by 01_Workflow_Orchestration/setup.py (Solution Launcher flow)
+dbutils.widgets.text("catalog_name", "")
+dbutils.widgets.text("schema_prefix", "")
+
 current_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-current_dir = "/Workspace"+"/".join(current_path.split("/")[:-1])
+current_dir = "/Workspace" + "/".join(current_path.split("/")[:-1])
 config_path = f"{current_dir}/data/catalog_name.json"
 
-print(f"🔍 Loading configuration from: {config_path}")
+catalog_name = dbutils.widgets.get("catalog_name").strip()
+schema_prefix = dbutils.widgets.get("schema_prefix").strip()
 
-try:
-    with open(config_path, "r") as f:
-        config = json.load(f)
+if not catalog_name and os.path.exists(config_path):
+    print(f"🔍 Loading configuration from: {config_path}")
+    try:
+        with open(config_path, "r") as f:
+            config = json.load(f)
         catalog_name = config["catalog_name"]
-        schema_prefix = config.get("schema_prefix", "")
-    print(f"✅ Loaded catalog name: {catalog_name}")
-    if schema_prefix:
-        print(f"✅ Schema prefix: {schema_prefix}")
-except FileNotFoundError:
-    print("❌ ERROR: catalog_name.json not found. Cannot determine catalog to clean up.")
-    print("   Please ensure the workflow has been run at least once to generate this file.")
-    dbutils.notebook.exit("Configuration file not found")
-except Exception as e:
-    print(f"❌ ERROR loading configuration: {str(e)}")
-    dbutils.notebook.exit("Failed to load configuration")
+        if not schema_prefix:
+            schema_prefix = config.get("schema_prefix", "")
+    except Exception as e:
+        print(f"❌ ERROR loading configuration: {e}")
+        dbutils.notebook.exit("Failed to load configuration")
+
+if not catalog_name:
+    print("❌ ERROR: catalog_name not set. Pass --params catalog_name=<name> or run the Solution Launcher.")
+    dbutils.notebook.exit("Configuration missing")
+
+print(f"✅ Loaded catalog name: {catalog_name}")
+if schema_prefix:
+    print(f"✅ Schema prefix: {schema_prefix}")
+    schema_prefix += "_"
 
 # COMMAND ----------
 
@@ -74,7 +85,9 @@ except Exception as e:
 
 # COMMAND ----------
 
-# Define the tables and schemas created by this workflow
+# Define the tables and schemas created by this workflow.
+# Note: bronze.impression_logs_prod is NOT in this list — that table is supplied via
+# Delta Share from an upstream producer and cleanup must never drop it.
 workflow_tables = {
     "silver": ["identity_info_consolidated", "email_ifa_pairs", "email_ip_pairs"],
     "gold": ["identity_graph"]

@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # Part 1: Create Consolidated Identity Information
 # MAGIC
-# MAGIC This notebook consolidates identity information from raw impression logs to create the foundation for our digital identity graph. This is the first step in our medallion architecture workflow.
+# MAGIC This notebook consolidates digital identity information from raw impression logs to create the foundation for our identity graph. This is the first step in our medallion architecture workflow.
 # MAGIC
 # MAGIC ## 🎯 Objective
 # MAGIC Transform raw impression logs into aggregated identity combinations that will serve as the basis for building email-to-identifier relationships.
@@ -33,13 +33,30 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# Load catalog name and schema prefix from configuration
+# Two config sources are supported (widget wins so DAB job parameters take precedence over the file):
+#   1. Job parameters / notebook widgets `catalog_name` and `schema_prefix` (DAB flow)
+#   2. ./data/catalog_name.json written by 01_Workflow_Orchestration/setup.py (Solution Launcher flow)
 import json
+import os
 
-with open("./data/catalog_name.json", "r") as f:
-    config = json.load(f)
+dbutils.widgets.text("catalog_name", "")
+dbutils.widgets.text("schema_prefix", "")
+
+catalog_name = dbutils.widgets.get("catalog_name").strip()
+schema_prefix = dbutils.widgets.get("schema_prefix").strip()
+
+if not catalog_name and os.path.exists("./data/catalog_name.json"):
+    with open("./data/catalog_name.json", "r") as f:
+        config = json.load(f)
     catalog_name = config["catalog_name"]
-    schema_prefix = config.get("schema_prefix", "")
+    if not schema_prefix:
+        schema_prefix = config.get("schema_prefix", "")
+
+if not catalog_name:
+    raise ValueError(
+        "catalog_name is empty. Pass --params catalog_name=<name> to `bundle run`, "
+        "or run the Solution Launcher first."
+    )
 
 print(f"✅ Loaded catalog name: {catalog_name}")
 if schema_prefix:
