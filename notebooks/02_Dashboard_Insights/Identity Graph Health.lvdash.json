@@ -52,7 +52,7 @@
         "  GROUP BY min_date),\n",
         "\n",
         "server_emails AS (SELECT date, COUNT(DISTINCT request_kv._server_email) AS server_emails \n",
-        "FROM media_advertising.adtech_bronze.impression_logs_prod\n",
+        "FROM media_advertising.bronze.impression_logs_prod\n",
         "GROUP BY date)\n",
         "\n",
         "\n",

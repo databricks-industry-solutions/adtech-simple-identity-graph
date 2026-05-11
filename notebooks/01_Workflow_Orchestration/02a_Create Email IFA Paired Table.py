@@ -12,7 +12,7 @@
 # MAGIC - **Focus**: Email-IFA relationships with frequency and recency metrics
 # MAGIC
 # MAGIC ## 🧮 Primary ID Selection Logic
-# MAGIC For each email, we select the "primary" IFA using waterfall logic. This will be the same logic applied to select IPs, and can be applied to any additional digital identifiers your own:
+# MAGIC For each email, we select the "primary" IFA using waterfall logic. This will be the same logic applied to select IPs, and can be applied to any additional digital identifiers you own:
 # MAGIC 1. **Highest frequency** (`n_occurances`) - The IFA seen most often with this email
 # MAGIC 2. **Most recent** (`max_date`) - In case of ties, choose the IFA observed most recently
 # MAGIC

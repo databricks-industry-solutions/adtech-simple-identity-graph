@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # Part 1: Create Consolidated Identity Information
 # MAGIC
-# MAGIC This notebook consolidates digital identity information from raw impression logs to create the foundation for our identity graph. This is the first step in our medallion architecture workflow.
+# MAGIC This notebook consolidates identity information from raw impression logs to create the foundation for our digital identity graph. This is the first step in our medallion architecture workflow.
 # MAGIC
 # MAGIC ## 🎯 Objective
 # MAGIC Transform raw impression logs into aggregated identity combinations that will serve as the basis for building email-to-identifier relationships.
@@ -34,16 +34,18 @@ from pyspark.sql import functions as F
 # COMMAND ----------
 
 # Two config sources are supported (widget wins so DAB job parameters take precedence over the file):
-#   1. Job parameters / notebook widgets `catalog_name` and `schema_prefix` (DAB flow)
+#   1. Job parameters / notebook widgets `catalog_name`, `schema_prefix`, `bronze_source_catalog` (DAB flow)
 #   2. ./data/catalog_name.json written by 01_Workflow_Orchestration/setup.py (Solution Launcher flow)
 import json
 import os
 
 dbutils.widgets.text("catalog_name", "")
 dbutils.widgets.text("schema_prefix", "")
+dbutils.widgets.text("bronze_source_catalog", "media_advertising")
 
 catalog_name = dbutils.widgets.get("catalog_name").strip()
 schema_prefix = dbutils.widgets.get("schema_prefix").strip()
+bronze_source_catalog = dbutils.widgets.get("bronze_source_catalog").strip() or "media_advertising"
 
 if not catalog_name and os.path.exists("./data/catalog_name.json"):
     with open("./data/catalog_name.json", "r") as f:
@@ -51,6 +53,7 @@ if not catalog_name and os.path.exists("./data/catalog_name.json"):
     catalog_name = config["catalog_name"]
     if not schema_prefix:
         schema_prefix = config.get("schema_prefix", "")
+    bronze_source_catalog = config.get("bronze_source_catalog", bronze_source_catalog)
 
 if not catalog_name:
     raise ValueError(
@@ -63,6 +66,11 @@ if schema_prefix:
     print(f"✅ Schema prefix: {schema_prefix}")
     schema_prefix += "_"
 
+# Fully-qualified Delta-shared / Marketplace source for raw impression logs.
+# Only the catalog can vary — schema and table names are fixed.
+bronze_source_table = f"{bronze_source_catalog}.bronze.impression_logs_prod"
+print(f"📥 Reading bronze impressions from: {bronze_source_table}")
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -72,7 +80,7 @@ if schema_prefix:
 
 # COMMAND ----------
 
-impression_logs = spark.table(f"{catalog_name}.{schema_prefix}bronze.impression_logs_prod")
+impression_logs = spark.table(bronze_source_table)
 
 # COMMAND ----------
 

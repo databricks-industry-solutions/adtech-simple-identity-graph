@@ -52,7 +52,7 @@
         "  GROUP BY min_date),\n",
         "\n",
         "server_emails AS (SELECT date, COUNT(DISTINCT request_kv._server_email) AS server_emails \n",
-        "FROM {{catalog_name}}.{{schema_prefix}}bronze.impression_logs_prod\n",
+        "FROM {{bronze_source_catalog}}.bronze.impression_logs_prod\n",
         "GROUP BY date)\n",
         "\n",
         "\n",

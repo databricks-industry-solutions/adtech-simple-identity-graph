@@ -177,9 +177,11 @@ Navigate to the Deployments tab in the Asset Bundle UI (🚀 icon) and click "Ru
 
 ## Source Data
 
-The bronze table this accelerator reads from — `<catalog>.<prefix>bronze.impression_logs_prod` — is supplied via **Delta Share** from a Databricks-managed upstream producer. Before running the workflow, accept the share into your workspace so the table lands at the expected catalog/schema path.
+The bronze table this accelerator reads from — `<bronze_source_catalog>.bronze.impression_logs_prod` — is supplied via **Delta Share** (and, in the future, the Databricks **Marketplace**) from a Databricks-managed upstream producer. The schema (`bronze`) and table (`impression_logs_prod`) names are fixed; only the catalog name varies per recipient.
 
-> _TODO: link the share name / acceptance instructions here once finalized._
+Configure the source catalog via the `bronze_source_catalog` job parameter (default: `media_advertising`). The workflow keeps **reads** from this read-only source separate from **writes** (silver/gold) into your own `catalog_name`.
+
+> _TODO: link the canonical share name / Marketplace listing here once finalized._
 
 The synthetic dataset behind that shared table was originally generated with [**dbldatagen**](https://github.com/databrickslabs/dbldatagen) and [**Faker**](https://github.com/joke2k/faker). You do not need to install either of those packages to run this accelerator — the share provides the data.
 

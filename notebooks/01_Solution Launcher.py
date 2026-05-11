@@ -70,7 +70,7 @@ catalog_name = "media_advertising"
 # MAGIC | Step |  Table                       | Layer   | Purpose                                        |
 # MAGIC | --------------|---------------|--------------|--------------------|
 # MAGIC | 0    | Impression Logs              | Bronze  | Raw campaign impression activity with device-level identifiers and metadata. |
-# MAGIC | 1    | Consolidated Identity Table  | Silver  | Optimized for operational efficiency; aggregates identifiers for multiple use cases.|
+# MAGIC | 1    | Intermediate Consolidated Identity Table  | Silver  | Optimized for operational efficiency; aggregates identifiers for multiple use cases.|
 # MAGIC | 2    | Individual-Level Proxy Table | Silver  |Stores identity resolution results at the individual level (not queried directly).|
 # MAGIC | 2    | Household-Level Proxy Table|Silver  |Stores resolved household identifiers.|
 # MAGIC | 3    | Final Identity Graph | Gold |Combines individual and household proxies into a unified, query-ready graph.|

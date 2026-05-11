@@ -55,7 +55,12 @@ resources:
       description: "Constructs a simple identity graph from advertising impression logs using a medallion architecture (Bronze → Silver → Gold)"
 
       # Job parameters are auto-injected as widgets in every task. Pass at run time with:
-      #   databricks bundle run identity_graph_workflow --params catalog_name=foo,schema_prefix=adtech
+      #   databricks bundle run identity_graph_workflow \
+      #     --params catalog_name=foo,schema_prefix=adtech,bronze_source_catalog=<share/marketplace catalog>
+      # `catalog_name` + `schema_prefix` control where silver/gold get *written*.
+      # `bronze_source_catalog` is the catalog where the read-only Delta-shared (and eventually
+      # Marketplace-listed) impression_logs_prod table lives. Schema/table names are fixed at
+      # `bronze.impression_logs_prod` — only the catalog name will change between recipients.
       # The Solution Launcher flow ignores these and uses notebooks/01_Workflow_Orchestration/data/catalog_name.json
       # written by setup.py instead.
       parameters:
@@ -63,6 +68,8 @@ resources:
           default: ""
         - name: schema_prefix
           default: "adtech"
+        - name: bronze_source_catalog
+          default: "media_advertising"
 
       # Email notifications
       email_notifications:

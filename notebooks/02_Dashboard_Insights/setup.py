@@ -39,6 +39,7 @@ with open(config_path, "r") as f:
 
 catalog_name = config["catalog_name"]
 schema_prefix = config.get("schema_prefix", "")
+bronze_source_catalog = config.get("bronze_source_catalog", "media_advertising")
 if schema_prefix:
     schema_prefix += "_"
 
@@ -50,8 +51,9 @@ if not catalog_name:
 
 config_html = f"""
 <div style='background-color: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 3px solid #007bff;'>
-    <p style='margin: 0 0 4px 0;'>Catalog:       <strong>{catalog_name}</strong></p>
-    <p style='margin: 0;'>Schema prefix: <strong>{schema_prefix or '(none)'}</strong></p>
+    <p style='margin: 0 0 4px 0;'>Catalog (writes):    <strong>{catalog_name}</strong></p>
+    <p style='margin: 0 0 4px 0;'>Schema prefix:       <strong>{schema_prefix or '(none)'}</strong></p>
+    <p style='margin: 0;'>Bronze source catalog: <strong>{bronze_source_catalog}</strong> (read-only)</p>
 </div>
 """
 displayHTML(config_html)
@@ -85,10 +87,15 @@ displayHTML(job_status_html)
 with open(template_path, "r") as f:
     template_str = f.read()
 
-rendered_str = template_str.replace("{{catalog_name}}", catalog_name).replace("{{schema_prefix}}", schema_prefix)
+rendered_str = (
+    template_str
+    .replace("{{catalog_name}}", catalog_name)
+    .replace("{{schema_prefix}}", schema_prefix)
+    .replace("{{bronze_source_catalog}}", bronze_source_catalog)
+)
 
 # Validate that all placeholders were substituted
-remaining_placeholders = [tok for tok in ("{{catalog_name}}", "{{schema_prefix}}") if tok in rendered_str]
+remaining_placeholders = [tok for tok in ("{{catalog_name}}", "{{schema_prefix}}", "{{bronze_source_catalog}}") if tok in rendered_str]
 if remaining_placeholders:
     raise RuntimeError(
         f"Template placeholders not replaced: {remaining_placeholders}. "
@@ -103,11 +110,13 @@ with open(output_path, "w") as f:
 
 n_catalog = template_str.count("{{catalog_name}}")
 n_prefix = template_str.count("{{schema_prefix}}")
+n_source = template_str.count("{{bronze_source_catalog}}")
 render_html = f"""
 <div style='background-color: #d4edda; padding: 12px; border-radius: 6px; border-left: 3px solid #28a745;'>
     <p style='margin: 0 0 4px 0;'>✅ Rendered dashboard to <code>{output_path}</code></p>
     <p style='margin: 0 0 4px 0;'>Substituted <code>{{{{catalog_name}}}}</code> ({n_catalog}x) → <strong>{catalog_name}</strong></p>
-    <p style='margin: 0;'>Substituted <code>{{{{schema_prefix}}}}</code> ({n_prefix}x) → <strong>{schema_prefix or '(none)'}</strong></p>
+    <p style='margin: 0 0 4px 0;'>Substituted <code>{{{{schema_prefix}}}}</code> ({n_prefix}x) → <strong>{schema_prefix or '(none)'}</strong></p>
+    <p style='margin: 0;'>Substituted <code>{{{{bronze_source_catalog}}}}</code> ({n_source}x) → <strong>{bronze_source_catalog}</strong></p>
 </div>
 """
 displayHTML(render_html)
